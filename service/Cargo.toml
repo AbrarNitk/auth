@@ -6,8 +6,8 @@ authors = [ "abrar.nitk@gmail.com" ]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-hyper = {version = "0.14", features = ["full"] }
-tokio = { version = "1", features = ["full"] }
+hyper = { workspace = true }
+tokio = { workspace = true }
 thiserror = { workspace = true }
 once_cell = "1"
 serde = { version = "1", features = ["derive"]}
@@ -19,3 +19,4 @@ tracing-subscriber = { workspace = true }
 tracing-forest = { workspace = true }
 dotenv = "0.15"
 db = { path = "./db" }
+auth = { path = "./auth" }

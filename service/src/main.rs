@@ -41,8 +41,8 @@ async fn http_main() -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
     println!("Environment set: {}", env_path);
 
     // Initializing the database pool
-    db::pg::init_db_pool();
-    db::redis::init_redis_pool();
+    // db::pg::init_db_pool();
+    // db::redis::init_redis_pool();
 
     // Creating the tcp listener
     let socket_address: std::net::SocketAddr = ([0, 0, 0, 0], 8000).into();

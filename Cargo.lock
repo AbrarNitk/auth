@@ -25,6 +25,12 @@ dependencies = [
 [[package]]
 name = "auth"
 version = "0.1.0"
+dependencies = [
+ "hyper",
+ "thiserror",
+ "tokio",
+ "url",
+]
 
 [[package]]
 name = "autocfg"
@@ -817,6 +823,7 @@ dependencies = [
 name = "service"
 version = "0.1.0"
 dependencies = [
+ "auth",
  "db",
  "dotenv",
  "futures",

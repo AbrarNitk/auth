@@ -1,6 +1,9 @@
 pub async fn handler(
     req: hyper::Request<hyper::Body>,
 ) -> Result<hyper::Response<hyper::Body>, http_service::errors::RouteError> {
+    if req.uri().path().starts_with("/auth/") {
+        return Ok(auth::controller::routes(req).await?);
+    }
     match (req.method(), req.uri().path()) {
         (&hyper::Method::GET, "/") => {
             let mut response = hyper::Response::new(hyper::Body::empty());

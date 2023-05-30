@@ -4,4 +4,6 @@ pub enum RouteError {
     JsonSerializeError(#[from] serde_json::Error),
     #[error("GetProfileError: {0}")]
     GetProfileError(#[from] http_service::controller::GetProfileError),
+    #[error("AuthError")]
+    AuthError(#[from] auth::error::AuthError),
 }
