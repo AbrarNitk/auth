@@ -6,4 +6,6 @@ pub enum RouteError {
     GetProfileError(#[from] http_service::controller::GetProfileError),
     #[error("AuthError")]
     AuthError(#[from] auth::error::AuthError),
+    #[error("FileReadError: {0}")]
+    FileReadError(#[from] std::io::Error),
 }
