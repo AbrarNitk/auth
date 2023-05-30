@@ -9,4 +9,6 @@ edition = "2021"
 thiserror = { workspace = true }
 hyper = { workspace = true }
 url = "2"
-tokio = {workspace = true}
+tokio = { workspace = true }
+once_cell = { workspace = true }
+oauth2 = "4"
