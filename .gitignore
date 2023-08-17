@@ -4,3 +4,5 @@
 dj/proj/local_settings.py
 local.env
 
+
+*/**/__pycache__
