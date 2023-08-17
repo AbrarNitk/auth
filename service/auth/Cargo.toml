@@ -12,3 +12,7 @@ url = "2"
 tokio = { workspace = true }
 once_cell = { workspace = true }
 oauth2 = "4"
+
+serde = { workspace = true, features = ["derive"]}
+serde_json = { workspace = true }
+serde_derive = { workspace = true }
