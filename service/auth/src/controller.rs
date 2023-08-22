@@ -15,7 +15,7 @@ pub async fn routes(
 ) -> Result<hyper::Response<hyper::Body>, crate::error::AuthError> {
     match (req.method(), req.uri().path()) {
         (&hyper::Method::POST, "/api/auth/send-otp/") => {
-            match crate::communication::send_email().await {
+            match crate::otp::send_otp("manishmsiclub@gmail.com", "Manish Jain").await {
                 Ok(_) => {
                     println!("Hello Send OTP");
                 }

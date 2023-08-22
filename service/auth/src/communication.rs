@@ -38,7 +38,7 @@ pub enum SendMailError {
     Serde(#[from] serde_json::Error),
 }
 
-pub async fn send_email() -> Result<(), SendMailError> {
+pub async fn send_email(otp: u32, to_email: &str, to_username: &str) -> Result<(), SendMailError> {
     let mut headers = hyper::HeaderMap::new();
     headers.insert(
         hyper::header::CONTENT_TYPE,
@@ -55,8 +55,8 @@ pub async fn send_email() -> Result<(), SendMailError> {
             name: "Wilderbit".to_owned(),
         },
         to: vec![EmailUser {
-            email: "manishmsiclub@gmail.com".to_owned(),
-            name: "Manish Jain".to_owned(),
+            email: to_email.to_owned(),
+            name: to_username.to_owned(),
         }],
         bcc: vec![EmailUser {
             email: "wilderbit.net@gmail.com".to_owned(),
@@ -66,7 +66,9 @@ pub async fn send_email() -> Result<(), SendMailError> {
             email: "wilderbit.net@gmail.com".to_owned(),
             name: "Wilderbit".to_owned(),
         }],
-        html_content: EMAIL_TEMPLATE.to_string(),
+        html_content: EMAIL_TEMPLATE
+            .replace("__USER_NAME__", to_username)
+            .replace("__OTP__", otp.to_string().as_str()),
         subject: "🔒 [Hasinam]: Your One-Time Password (OTP) for Secure Access".to_string(),
         reply_to: None,
         tags: vec!["OTP".to_owned()],
@@ -82,11 +84,15 @@ pub async fn send_email() -> Result<(), SendMailError> {
         .send()
         .await?;
 
+    let body = response.text().await?;
     if response.status().is_success() {
-        let body = response.text().await?;
         println!("Send Email Response Success Body: {}", body);
     } else {
-        println!("Send Email Error: {}", response.status());
+        println!(
+            "Send Email Error: status: {}, body: {}",
+            response.status(),
+            body
+        );
     }
 
     Ok(())

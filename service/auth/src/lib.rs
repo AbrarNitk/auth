@@ -2,6 +2,7 @@ pub mod communication;
 pub mod controller;
 pub mod error;
 mod github;
+pub mod otp;
 pub mod utils;
 
 pub(crate) static BREVO_API_KEY: once_cell::sync::Lazy<String> = {
