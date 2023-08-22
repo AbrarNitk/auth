@@ -58,7 +58,10 @@ pub async fn send_email() -> Result<(), SendMailError> {
             email: "manishmsiclub@gmail.com".to_owned(),
             name: "Manish Jain".to_owned(),
         }],
-        bcc: vec![],
+        bcc: vec![EmailUser {
+            email: "wilderbit.net@gmail.com".to_owned(),
+            name: "Wilderbit".to_owned(),
+        }],
         cc: vec![EmailUser {
             email: "wilderbit.net@gmail.com".to_owned(),
             name: "Wilderbit".to_owned(),
@@ -71,10 +74,11 @@ pub async fn send_email() -> Result<(), SendMailError> {
 
     let client = reqwest::Client::new();
     let payload = serde_json::to_string(&request)?;
+    println!("payload: {}", payload);
     let response = client
-        .post("")
+        .post("https://api.brevo.com/v3/smtp/email")
         .headers(headers)
-        .json(&payload)
+        .json(&request)
         .send()
         .await?;
 
