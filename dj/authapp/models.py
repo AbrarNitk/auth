@@ -39,10 +39,11 @@ class UserToken(DateTimeBase):
         db_table = "authapp_user_token"
 
 
-class UserOtp(models.Model):
-    email = models.CharField(max_length=50, null=True)
-    phone = models.CharField(max_length=20, null=True)
+class UserOtp(DateTimeBase):
+    email = models.CharField(max_length=50, null=True, unique = True)
+    phone = models.CharField(max_length=20, null=True, unique = True)
     otp_bucket = models.JSONField()
+    status = models.CharField(max_length=50)
 
     class Meta:
         db_table = "authapp_user_otp"

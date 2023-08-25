@@ -84,15 +84,12 @@ pub async fn send_email(otp: u32, to_email: &str, to_username: &str) -> Result<(
         .send()
         .await?;
 
+    let status = response.status();
     let body = response.text().await?;
-    if response.status().is_success() {
+    if status.is_success() {
         println!("Send Email Response Success Body: {}", body);
     } else {
-        println!(
-            "Send Email Error: status: {}, body: {}",
-            response.status(),
-            body
-        );
+        println!("Send Email Error: status: {}, body: {}", status, body);
     }
 
     Ok(())

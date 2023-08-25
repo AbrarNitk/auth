@@ -12,10 +12,11 @@ pub struct VerifyOtpReq {
 
 pub async fn routes(
     req: hyper::Request<hyper::Body>,
+    db_pool: db::pg::DbPool,
 ) -> Result<hyper::Response<hyper::Body>, crate::error::AuthError> {
     match (req.method(), req.uri().path()) {
         (&hyper::Method::POST, "/api/auth/send-otp/") => {
-            match crate::otp::send_otp("manishmsiclub@gmail.com", "Manish Jain").await {
+            match crate::otp::send_otp("manishmsiclub@gmail.com", "Manish Jain", db_pool).await {
                 Ok(_) => {
                     println!("Hello Send OTP");
                 }

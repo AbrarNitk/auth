@@ -17,11 +17,15 @@ diesel::table! {
 diesel::table! {
     authapp_user_otp (id) {
         id -> Int8,
+        created_on -> Timestamptz,
+        updated_on -> Timestamptz,
         #[max_length = 50]
         email -> Nullable<Text>,
         #[max_length = 20]
         phone -> Nullable<Text>,
         otp_bucket -> Jsonb,
+        #[max_length = 50]
+        status -> Text,
     }
 }
 

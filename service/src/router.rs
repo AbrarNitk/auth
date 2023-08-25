@@ -1,8 +1,9 @@
 pub async fn handler(
     req: hyper::Request<hyper::Body>,
+    db_pool: db::pg::DbPool,
 ) -> Result<hyper::Response<hyper::Body>, http_service::errors::RouteError> {
     if req.uri().path().starts_with("/api/auth/") {
-        return Ok(auth::controller::routes(req).await?);
+        return Ok(auth::controller::routes(req, db_pool).await?);
     }
     match (req.method(), req.uri().path()) {
         (&hyper::Method::GET, "/") => Ok(hyper::Response::new(hyper::Body::from(
