@@ -1,7 +1,11 @@
 export PYTHONPATH=${PROJDIR}/dj
-export DATABASE_URL=postgres://fastn_cw:fastn_cw@127.0.0.1:5432/temp_db
 export DIESEL_CONFIG_FILE=${PROJDIR}/diesel.toml
 
+ROLE_NAME=temp_user
+PASSWORD=temp_pass
+DATABASE_NAME=temp_db
+
+export DATABASE_URL=postgres://${ROLE_NAME}:${PASSWORD}@127.0.0.1:5432/${DATABASE_NAME}
 
 function pushd2() {
   PUSHED="$(pwd)"
@@ -38,9 +42,6 @@ function dbshell() {
 }
 
 function recreatedb() {
-  DATABASE_NAME=temp_db
-  ROLE_NAME=temp_user
-  PASSWORD=temp_pass
   WHO=`whoami`
   psql -h 127.0.0.1 -U "${WHO}" -d postgres -c "DROP ROLE IF EXISTS ${ROLE_NAME};"
   psql -h 127.0.0.1 -U "${WHO}" -d postgres -c "CREATE ROLE ${ROLE_NAME} WITH SUPERUSER LOGIN PASSWORD '${PASSWORD}';"

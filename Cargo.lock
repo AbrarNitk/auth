@@ -30,6 +30,7 @@ dependencies = [
 name = "auth"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "db",
  "hyper",
  "oauth2",

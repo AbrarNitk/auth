@@ -1,14 +1,6 @@
 use diesel::prelude::*;
 use diesel::{OptionalExtension, RunQueryDsl};
 
-#[derive(thiserror::Error, Debug)]
-pub enum DBError {
-    #[error("DieselError: {:?}", _0)]
-    Diesel(#[from] diesel::result::Error),
-    #[error("PooledConnectionError: cannot get the connection from r2d2 pool")]
-    PooledConnection(String),
-}
-
 #[derive(diesel::Queryable)]
 pub struct OtpDB {
     pub id: i64,
@@ -20,11 +12,14 @@ pub struct OtpDB {
     pub updated_on: chrono::DateTime<chrono::Utc>,
 }
 
-pub fn get_otp(user_email: &str, db_pool: crate::pg::DbPool) -> Result<Option<OtpDB>, DBError> {
+pub fn get_otp(
+    user_email: &str,
+    db_pool: crate::pg::DbPool,
+) -> Result<Option<OtpDB>, crate::DBError> {
     use crate::schema::authapp_user_otp;
     let mut conn = db_pool
         .get()
-        .map_err(|x| DBError::PooledConnection(x.to_string()))?;
+        .map_err(|x| crate::DBError::PooledConnection(x.to_string()))?;
     Ok(authapp_user_otp::dsl::authapp_user_otp
         .filter(authapp_user_otp::dsl::email.eq(user_email))
         .select((
@@ -40,17 +35,17 @@ pub fn get_otp(user_email: &str, db_pool: crate::pg::DbPool) -> Result<Option<Ot
         .optional()?)
 }
 
-pub fn upsert(
+pub fn otp_upsert(
     email: &str,
     otp: &serde_json::Value,
     status: &str,
-    db_pool: crate::pg::DbPool,
-) -> Result<(), DBError> {
+    db_pool: &crate::pg::DbPool,
+) -> Result<i64, crate::DBError> {
     use crate::schema::authapp_user_otp;
     let mut conn = db_pool
         .get()
-        .map_err(|x| DBError::PooledConnection(x.to_string()))?;
-    diesel::insert_into(authapp_user_otp::dsl::authapp_user_otp)
+        .map_err(|x| crate::DBError::PooledConnection(x.to_string()))?;
+    Ok(diesel::insert_into(authapp_user_otp::dsl::authapp_user_otp)
         .values((
             authapp_user_otp::dsl::email.eq(email),
             authapp_user_otp::dsl::otp_bucket.eq(otp),
@@ -65,6 +60,26 @@ pub fn upsert(
             authapp_user_otp::dsl::status.eq(status),
             authapp_user_otp::dsl::updated_on.eq(chrono::Utc::now()),
         ))
-        .execute(&mut conn)?;
+        .returning(authapp_user_otp::dsl::id)
+        .get_result::<i64>(&mut conn)?)
+}
+
+pub fn otp_update_status(
+    id: i64,
+    status: &str,
+    pool: &crate::pg::DbPool,
+) -> Result<(), crate::DBError> {
+    use crate::schema::authapp_user_otp;
+    let mut conn = pool
+        .get()
+        .map_err(|x| crate::DBError::PooledConnection(x.to_string()))?;
+    diesel::update(
+        authapp_user_otp::dsl::authapp_user_otp.filter(authapp_user_otp::dsl::id.eq(id)),
+    )
+    .set((
+        authapp_user_otp::dsl::status.eq(status),
+        authapp_user_otp::dsl::updated_on.eq(chrono::Utc::now()),
+    ))
+    .execute(&mut conn)?;
     Ok(())
 }

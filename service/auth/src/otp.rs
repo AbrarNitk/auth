@@ -1,7 +1,17 @@
+#[derive(serde::Serialize, serde::Deserialize)]
+struct OtpBucketItem {
+    otp: u32,
+    expiry_at: i64,
+}
+
 #[derive(thiserror::Error, Debug)]
 pub enum SendOtpError {
     #[error("SendMailError: {}", _0)]
     SendMail(#[from] crate::communication::SendMailError),
+    #[error("SerdeError: {}", _0)]
+    Serde(#[from] serde_json::Error),
+    #[error("DBError: {}", _0)]
+    DBError(#[from] db::DBError),
 }
 
 fn generate_otp() -> u32 {
@@ -16,9 +26,19 @@ pub async fn send_otp(
     db_pool: db::pg::DbPool,
 ) -> Result<(), SendOtpError> {
     let otp = generate_otp();
-    // sending the email
-    crate::communication::send_email(otp, email, username).await?;
-    // send email
+
+    let otp_bucket = vec![OtpBucketItem {
+        otp,
+        expiry_at: chrono::Utc::now().timestamp(),
+    }];
+    let otp_id = db::auth::otp_upsert(
+        email,
+        &serde_json::to_value(&otp_bucket)?,
+        "SENDING",
+        &db_pool,
+    )?;
+    // crate::communication::send_email(otp, email, username).await?;
+    db::auth::otp_update_status(otp_id, "SEND", &db_pool)?;
     Ok(())
 }
 
