@@ -12,9 +12,11 @@ pub struct OtpDB {
     pub updated_on: chrono::DateTime<chrono::Utc>,
 }
 
+impl OtpDB {}
+
 pub fn get_otp(
     user_email: &str,
-    db_pool: crate::pg::DbPool,
+    db_pool: &crate::pg::DbPool,
 ) -> Result<Option<OtpDB>, crate::DBError> {
     use crate::schema::authapp_user_otp;
     let mut conn = db_pool
@@ -77,6 +79,28 @@ pub fn otp_update_status(
         authapp_user_otp::dsl::authapp_user_otp.filter(authapp_user_otp::dsl::id.eq(id)),
     )
     .set((
+        authapp_user_otp::dsl::status.eq(status),
+        authapp_user_otp::dsl::updated_on.eq(chrono::Utc::now()),
+    ))
+    .execute(&mut conn)?;
+    Ok(())
+}
+
+pub fn otp_update_bucket(
+    id: i64,
+    bucket: &serde_json::Value,
+    status: &str,
+    pool: &crate::pg::DbPool,
+) -> Result<(), crate::DBError> {
+    use crate::schema::authapp_user_otp;
+    let mut conn = pool
+        .get()
+        .map_err(|x| crate::DBError::PooledConnection(x.to_string()))?;
+    diesel::update(
+        authapp_user_otp::dsl::authapp_user_otp.filter(authapp_user_otp::dsl::id.eq(id)),
+    )
+    .set((
+        authapp_user_otp::dsl::otp_bucket.eq(bucket),
         authapp_user_otp::dsl::status.eq(status),
         authapp_user_otp::dsl::updated_on.eq(chrono::Utc::now()),
     ))

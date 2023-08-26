@@ -25,6 +25,12 @@ pub async fn routes(
             Ok(hyper::Response::new(hyper::Body::from("")))
         }
         (&hyper::Method::POST, "/api/auth/resend-otp/") => {
+            match crate::otp::resend_otp("manishmsiclub@gmail.com", db_pool).await {
+                Ok(_) => {
+                    println!("Hello resend OTP");
+                }
+                Err(e) => println!("Error in sending email: {}", e),
+            };
             println!("Hello resend OTP");
             Ok(hyper::Response::new(hyper::Body::from("")))
         }
