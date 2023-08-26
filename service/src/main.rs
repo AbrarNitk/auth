@@ -19,7 +19,7 @@ impl hyper::service::Service<hyper::Request<hyper::Body>> for HttpService {
     fn call(&mut self, req: hyper::Request<hyper::Body>) -> Self::Future {
         let pool = self.pool.clone();
         Box::pin(async move {
-            match service::router::handler(req, pool).await {
+            match service::route::handler(req, pool).await {
                 Ok(r) => Ok(r),
                 Err(_e) => {
                     dbg!(_e);

@@ -7,42 +7,89 @@ async fn from_body<T: serde::de::DeserializeOwned>(
     Ok(serde_json::from_slice(b.as_ref())?)
 }
 
+fn success(
+    data: impl serde::Serialize,
+) -> Result<hyper::Response<hyper::Body>, crate::error::AuthError> {
+    #[derive(serde::Serialize)]
+    struct ApiSuccess<T: serde::Serialize> {
+        data: T,
+        success: bool,
+    }
+
+    let resp = serde_json::to_vec(&ApiSuccess {
+        data,
+        success: true,
+    })?;
+
+    let mut response = hyper::Response::new(hyper::Body::from(resp));
+    *response.status_mut() = hyper::StatusCode::OK;
+    Ok(response)
+}
+
+fn error(
+    message: String,
+    status: hyper::StatusCode,
+) -> Result<hyper::Response<hyper::Body>, crate::error::AuthError> {
+    #[derive(serde::Serialize)]
+    struct ApiError {
+        message: String,
+        success: bool,
+    }
+
+    let resp = serde_json::to_vec(&ApiError {
+        success: false,
+        message,
+    })?;
+    let mut response = hyper::Response::new(hyper::Body::from(resp));
+    *response.status_mut() = status;
+    Ok(response)
+}
+
 pub async fn routes(
     req: hyper::Request<hyper::Body>,
     db_pool: db::pg::DbPool,
 ) -> Result<hyper::Response<hyper::Body>, crate::error::AuthError> {
     let (p, b) = req.into_parts();
-    let start = std::time::Instant::now();
+    let _start = std::time::Instant::now();
     match (&p.method, p.uri.path()) {
         (&hyper::Method::POST, "/api/auth/send-otp/") => {
             match crate::otp::send_otp(from_body(b).await?, db_pool).await {
-                Ok(_) => {
-                    println!("Hello Send OTP");
+                Ok(response) => success(response),
+                Err(err) => {
+                    println!("err:send_otp: {}", err);
+                    error(
+                        "server error".to_string(),
+                        hyper::StatusCode::INTERNAL_SERVER_ERROR,
+                    )
                 }
-                Err(e) => println!("Error in sending email: {}", e),
-            };
-            Ok(hyper::Response::new(hyper::Body::from("")))
+            }
         }
+
         (&hyper::Method::POST, "/api/auth/resend-otp/") => {
             match crate::otp::resend_otp(from_body(b).await?, db_pool).await {
-                Ok(_) => {
-                    println!("Hello resend OTP");
+                Ok(response) => success(response),
+                Err(err) => {
+                    println!("err:re_send_otp: {}", err);
+                    error(
+                        "server error".to_string(),
+                        hyper::StatusCode::INTERNAL_SERVER_ERROR,
+                    )
                 }
-                Err(e) => println!("Error in sending email: {}", e),
-            };
-            println!("Hello resend OTP");
-            Ok(hyper::Response::new(hyper::Body::from("")))
+            }
         }
         (&hyper::Method::POST, "/api/auth/verify-otp/") => {
             match crate::otp::verify_otp(from_body(b).await?, db_pool).await {
-                Ok(_) => {
-                    println!("Hello verify OTP");
+                Ok(response) => success(response),
+                Err(err) => {
+                    println!("err:re_send_otp: {}", err);
+                    error(
+                        "server error".to_string(),
+                        hyper::StatusCode::INTERNAL_SERVER_ERROR,
+                    )
                 }
-                Err(e) => println!("Error in sending email: {}", e),
-            };
-            Ok(hyper::Response::new(hyper::Body::from("")))
+            }
         }
-        _ => Ok(hyper::Response::new(hyper::Body::from(""))),
+        _ => Ok(crate::not_found!("route not found".to_string())),
     }
 
     // let path = req.uri().path();
@@ -63,4 +110,14 @@ pub async fn routes(
     // }
 
     //Ok(hyper::Response::new(hyper::Body::from("")))
+}
+
+pub fn response(body: String, status: hyper::StatusCode) -> hyper::Response<hyper::Body> {
+    let mut response = hyper::Response::new(hyper::Body::from(body));
+    *response.status_mut() = status;
+    response.headers_mut().append(
+        hyper::header::CONTENT_TYPE,
+        hyper::http::HeaderValue::from_static("application/json"),
+    );
+    return response;
 }

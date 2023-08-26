@@ -38,7 +38,7 @@ impl OtpBucket {
         self
     }
 
-    pub fn filter_old(mut self) -> Self {
+    pub fn filter_old(self) -> Self {
         let items_greater_than_five_minutes = self
             .0
             .into_iter()
@@ -87,7 +87,16 @@ pub struct SendOtpReq {
     pub phone: Option<String>,
 }
 
-pub async fn send_otp(otp_req: SendOtpReq, db_pool: db::pg::DbPool) -> Result<(), OtpError> {
+#[derive(serde::Serialize)]
+pub struct SendOtpRes {
+    pub email: String,
+    pub message: String,
+}
+
+pub async fn send_otp(
+    otp_req: SendOtpReq,
+    db_pool: db::pg::DbPool,
+) -> Result<SendOtpRes, OtpError> {
     let otp = generate_otp();
     let otp_bucket = vec![OtpBucketItem {
         otp,
@@ -101,10 +110,16 @@ pub async fn send_otp(otp_req: SendOtpReq, db_pool: db::pg::DbPool) -> Result<()
     )?;
     // crate::communication::send_email(otp, email, username).await?;
     db::auth::otp_update_status(otp_id, "SEND", &db_pool)?;
-    Ok(())
+    Ok(SendOtpRes {
+        email: otp_req.email,
+        message: "OTP send successfully".to_string(),
+    })
 }
 
-pub async fn resend_otp(otp_req: SendOtpReq, db_pool: db::pg::DbPool) -> Result<(), OtpError> {
+pub async fn resend_otp(
+    otp_req: SendOtpReq,
+    db_pool: db::pg::DbPool,
+) -> Result<SendOtpRes, OtpError> {
     let db_otp =
         db::auth::get_otp(otp_req.email.as_str(), &db_pool)?.ok_or(OtpError::OTPNotFound(
             format!("Not otp has entry found with email: {}", otp_req.email),
@@ -124,7 +139,10 @@ pub async fn resend_otp(otp_req: SendOtpReq, db_pool: db::pg::DbPool) -> Result<
     db::auth::otp_update_bucket(db_otp.id, &otp_bucket.to_value()?, "RESENDING", &db_pool)?;
     // crate::communication::send_email(new_otp, email, username).await?;
     db::auth::otp_update_status(db_otp.id, "RESEND", &db_pool)?;
-    Ok(())
+    Ok(SendOtpRes {
+        email: otp_req.email,
+        message: "OTP resend successfully".to_string(),
+    })
 }
 
 #[derive(serde::Deserialize)]
@@ -136,7 +154,15 @@ pub struct VerifyOtpReq {
     pub otp: u32,
 }
 
-pub async fn verify_otp(otp_req: VerifyOtpReq, db_pool: db::pg::DbPool) -> Result<(), OtpError> {
+#[derive(serde::Serialize)]
+pub struct VerifyOtpRes {
+    user_token: String,
+}
+
+pub async fn verify_otp(
+    otp_req: VerifyOtpReq,
+    db_pool: db::pg::DbPool,
+) -> Result<VerifyOtpRes, OtpError> {
     let db_otp =
         db::auth::get_otp(otp_req.email.as_str(), &db_pool)?.ok_or(OtpError::OTPNotFound(
             format!("Not otp has entry found with email: {}", otp_req.email),
@@ -165,5 +191,7 @@ pub async fn verify_otp(otp_req: VerifyOtpReq, db_pool: db::pg::DbPool) -> Resul
         &db_pool,
     )?;
 
-    Ok(())
+    Ok(VerifyOtpRes {
+        user_token: "".to_string(),
+    })
 }
