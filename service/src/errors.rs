@@ -8,4 +8,6 @@ pub enum RouteError {
     AuthError(#[from] auth::error::AuthError),
     #[error("FileReadError: {0}")]
     FileReadError(#[from] std::io::Error),
+    #[error("AIError")]
+    AIError(#[from] ai::apis::AIError),
 }

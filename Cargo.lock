@@ -3,6 +3,19 @@
 version = 3
 
 [[package]]
+name = "ai"
+version = "0.1.0"
+dependencies = [
+ "auth",
+ "db",
+ "hyper",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "android-tzdata"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1215,6 +1228,7 @@ dependencies = [
 name = "service"
 version = "0.1.0"
 dependencies = [
+ "ai",
  "auth",
  "db",
  "dotenv",

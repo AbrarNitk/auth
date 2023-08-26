@@ -5,6 +5,11 @@ pub async fn handler(
     if req.uri().path().starts_with("/api/auth/") {
         return Ok(auth::controller::routes(req, db_pool).await?);
     }
+
+    if req.uri().path().starts_with("/api/ai/") {
+        return Ok(ai::apis::handle(req, db_pool).await?);
+    }
+
     match (req.method(), req.uri().path()) {
         (&hyper::Method::GET, "/") => Ok(hyper::Response::new(hyper::Body::from(
             tokio::fs::read("service/index.html").await?,
@@ -24,14 +29,4 @@ pub async fn handler(
             req.uri().path()
         ))),
     }
-}
-
-pub fn response(body: String, status: hyper::StatusCode) -> hyper::Response<hyper::Body> {
-    let mut response = hyper::Response::new(hyper::Body::from(body));
-    *response.status_mut() = status;
-    response.headers_mut().append(
-        hyper::header::CONTENT_TYPE,
-        hyper::http::HeaderValue::from_static("application/json"),
-    );
-    response
 }

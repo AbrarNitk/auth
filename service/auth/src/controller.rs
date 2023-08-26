@@ -89,7 +89,10 @@ pub async fn routes(
                 }
             }
         }
-        _ => Ok(crate::not_found!("route not found".to_string())),
+
+        _ => Ok(crate::not_found!(
+            serde_json::json!({"message": "route not found","success": false}).to_string()
+        )),
     }
 
     // let path = req.uri().path();

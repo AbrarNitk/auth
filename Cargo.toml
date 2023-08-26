@@ -1,5 +1,5 @@
 [workspace]
-members = ["service", "service/db", "service/auth"]
+members = ["service", "service/db", "service/auth", "service/ai"]
 exclude = ["etc", "dj"]
 
 [workspace.dependencies]

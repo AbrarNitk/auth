@@ -20,3 +20,4 @@ tracing-forest = { workspace = true }
 dotenv = "0.15"
 db = { path = "./db" }
 auth = { path = "./auth" }
+ai = { path = "./ai" }

@@ -23,7 +23,14 @@ impl hyper::service::Service<hyper::Request<hyper::Body>> for HttpService {
                 Ok(r) => Ok(r),
                 Err(_e) => {
                     dbg!(_e);
-                    Ok(auth::server_error!())
+                    Ok(service::controller::response(
+                        serde_json::json!({
+                            "message": "Internal Server Error",
+                            "success": false
+                        })
+                        .to_string(),
+                        hyper::StatusCode::INTERNAL_SERVER_ERROR,
+                    ))
                 }
             }
         })
