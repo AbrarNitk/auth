@@ -24,9 +24,9 @@ pub async fn handler(
             );
             Ok(response)
         }
-        _ => Ok(auth::not_found!(format!(
-            "route not found: {}",
-            req.uri().path()
-        ))),
+
+        _ => Ok(auth::not_found!(serde_json::json!(
+                {"message": format!("route not found: {}",req.uri().path()),"success": false})
+        .to_string())),
     }
 }

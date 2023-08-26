@@ -24,11 +24,8 @@ impl hyper::service::Service<hyper::Request<hyper::Body>> for HttpService {
                 Err(_e) => {
                     dbg!(_e);
                     Ok(service::controller::response(
-                        serde_json::json!({
-                            "message": "Internal Server Error",
-                            "success": false
-                        })
-                        .to_string(),
+                        serde_json::json!({"message": "Internal Server Error","success": false})
+                            .to_string(),
                         hyper::StatusCode::INTERNAL_SERVER_ERROR,
                     ))
                 }
