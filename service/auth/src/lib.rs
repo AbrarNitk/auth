@@ -4,6 +4,7 @@ pub mod error;
 mod github;
 pub mod jwt;
 pub mod otp;
+
 pub mod utils;
 
 pub(crate) static BREVO_API_KEY: once_cell::sync::Lazy<String> = {

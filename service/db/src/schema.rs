@@ -11,6 +11,8 @@ diesel::table! {
         phone -> Nullable<Text>,
         #[max_length = 50]
         email -> Nullable<Text>,
+        active -> Bool,
+        last_login -> Nullable<Timestamptz>,
     }
 }
 
@@ -34,7 +36,7 @@ diesel::table! {
         id -> Int8,
         created_on -> Timestamptz,
         updated_on -> Timestamptz,
-        #[max_length = 127]
+        #[max_length = 255]
         token -> Text,
         active -> Bool,
         #[max_length = 255]
@@ -45,4 +47,8 @@ diesel::table! {
 
 diesel::joinable!(authapp_user_token -> authapp_user (user_id));
 
-diesel::allow_tables_to_appear_in_same_query!(authapp_user, authapp_user_otp, authapp_user_token,);
+diesel::allow_tables_to_appear_in_same_query!(
+    authapp_user,
+    authapp_user_otp,
+    authapp_user_token,
+);

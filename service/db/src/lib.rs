@@ -1,7 +1,8 @@
-pub mod auth;
+pub mod otp;
 pub mod pg;
 pub mod redis;
 pub mod schema;
+pub mod user;
 
 #[derive(thiserror::Error, Debug)]
 pub enum DBError {

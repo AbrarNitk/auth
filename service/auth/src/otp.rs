@@ -1,6 +1,3 @@
-use chrono::Utc;
-use std::ops::Sub;
-
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
 pub struct OtpBucketItem {
     otp: u32,
@@ -11,12 +8,13 @@ impl OtpBucketItem {
     pub fn new(otp: u32) -> Self {
         Self {
             otp,
-            expiry_at: Utc::now().timestamp(),
+            expiry_at: chrono::Utc::now().timestamp(),
         }
     }
 
     fn is_item_older_than_5_mins(&self) -> bool {
-        let five_min_old_time = Utc::now().timestamp().sub(5 * 60);
+        use std::ops::Sub;
+        let five_min_old_time = chrono::Utc::now().timestamp().sub(5 * 60);
         self.expiry_at.gt(&five_min_old_time)
     }
 }
@@ -102,14 +100,14 @@ pub async fn send_otp(
         otp,
         expiry_at: chrono::Utc::now().timestamp(),
     }];
-    let otp_id = db::auth::otp_upsert(
+    let otp_id = db::otp::otp_upsert(
         otp_req.email.as_str(),
         &serde_json::to_value(&otp_bucket)?,
         "SENDING",
         &db_pool,
     )?;
     // crate::communication::send_email(otp, email, username).await?;
-    db::auth::otp_update_status(otp_id, "SEND", &db_pool)?;
+    db::otp::otp_update_status(otp_id, "SEND", &db_pool)?;
     Ok(SendOtpRes {
         email: otp_req.email,
         message: "OTP send successfully".to_string(),
@@ -121,7 +119,7 @@ pub async fn resend_otp(
     db_pool: db::pg::DbPool,
 ) -> Result<SendOtpRes, OtpError> {
     let db_otp =
-        db::auth::get_otp(otp_req.email.as_str(), &db_pool)?.ok_or(OtpError::OTPNotFound(
+        db::otp::get_otp(otp_req.email.as_str(), &db_pool)?.ok_or(OtpError::OTPNotFound(
             format!("Not otp has entry found with email: {}", otp_req.email),
         ))?;
 
@@ -136,9 +134,9 @@ pub async fn resend_otp(
     let otp_bucket = OtpBucket::new(db_otp.otp_bucket)?
         .filter_old()
         .append(OtpBucketItem::new(new_otp));
-    db::auth::otp_update_bucket(db_otp.id, &otp_bucket.to_value()?, "RESENDING", &db_pool)?;
+    db::otp::otp_update_bucket(db_otp.id, &otp_bucket.to_value()?, "RESENDING", &db_pool)?;
     // crate::communication::send_email(new_otp, email, username).await?;
-    db::auth::otp_update_status(db_otp.id, "RESEND", &db_pool)?;
+    db::otp::otp_update_status(db_otp.id, "RESEND", &db_pool)?;
     Ok(SendOtpRes {
         email: otp_req.email,
         message: "OTP resend successfully".to_string(),
@@ -164,7 +162,7 @@ pub async fn verify_otp(
     db_pool: db::pg::DbPool,
 ) -> Result<VerifyOtpRes, OtpError> {
     let db_otp =
-        db::auth::get_otp(otp_req.email.as_str(), &db_pool)?.ok_or(OtpError::OTPNotFound(
+        db::otp::get_otp(otp_req.email.as_str(), &db_pool)?.ok_or(OtpError::OTPNotFound(
             format!("Not otp has entry found with email: {}", otp_req.email),
         ))?;
 
@@ -182,9 +180,12 @@ pub async fn verify_otp(
     }
 
     println!("otp is verified");
+    let id = db::user::upsert_with_email(otp_req.email.as_str(), &db_pool)?;
+    // get or create user
+    // generate the token
+    // inactive all the active tokens if any and issue the new token
     // create a new user here with the new token and expired all the old token
-
-    db::auth::otp_update_bucket(
+    db::otp::otp_update_bucket(
         db_otp.id,
         &otp_bucket.empty().to_value()?,
         "VERIFIED",

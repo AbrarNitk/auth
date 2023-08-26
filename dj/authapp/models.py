@@ -16,8 +16,8 @@ class CustomUser(DateTimeBase):
     name = models.CharField(max_length=127, null=True)
     phone = models.CharField(max_length=20, null=True, unique=True)
     email = models.CharField(max_length=50, null=True, unique=True)
-    active = (models.BooleanField(default=True),)
-    last_login = (models.DateTimeField(null=True),)
+    active = models.BooleanField(default=True)
+    last_login = models.DateTimeField(null=True)
 
     class Meta:
         db_table = "authapp_user"
