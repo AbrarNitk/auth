@@ -1,22 +1,21 @@
-#[derive(serde::Deserialize)]
-pub struct SendOtpReq {
-    pub email: Option<String>,
-    pub phone: Option<String>,
-}
-
-pub struct VerifyOtpReq {
-    pub email: Option<String>,
-    pub phone: Option<String>,
-    pub otp: u32,
+async fn from_body<T: serde::de::DeserializeOwned>(
+    b: hyper::Body,
+) -> Result<T, crate::error::AuthError> {
+    let b = hyper::body::to_bytes(b)
+        .await
+        .map_err(|e| crate::error::AuthError::ReadBody(format!("{e}")))?;
+    Ok(serde_json::from_slice(b.as_ref())?)
 }
 
 pub async fn routes(
     req: hyper::Request<hyper::Body>,
     db_pool: db::pg::DbPool,
 ) -> Result<hyper::Response<hyper::Body>, crate::error::AuthError> {
-    match (req.method(), req.uri().path()) {
+    let (p, b) = req.into_parts();
+    let start = std::time::Instant::now();
+    match (&p.method, p.uri.path()) {
         (&hyper::Method::POST, "/api/auth/send-otp/") => {
-            match crate::otp::send_otp("manishmsiclub@gmail.com", "Manish Jain", db_pool).await {
+            match crate::otp::send_otp(from_body(b).await?, db_pool).await {
                 Ok(_) => {
                     println!("Hello Send OTP");
                 }
@@ -25,7 +24,7 @@ pub async fn routes(
             Ok(hyper::Response::new(hyper::Body::from("")))
         }
         (&hyper::Method::POST, "/api/auth/resend-otp/") => {
-            match crate::otp::resend_otp("manishmsiclub@gmail.com", db_pool).await {
+            match crate::otp::resend_otp(from_body(b).await?, db_pool).await {
                 Ok(_) => {
                     println!("Hello resend OTP");
                 }
@@ -35,7 +34,12 @@ pub async fn routes(
             Ok(hyper::Response::new(hyper::Body::from("")))
         }
         (&hyper::Method::POST, "/api/auth/verify-otp/") => {
-            println!("Hello verify OTP");
+            match crate::otp::verify_otp(from_body(b).await?, db_pool).await {
+                Ok(_) => {
+                    println!("Hello verify OTP");
+                }
+                Err(e) => println!("Error in sending email: {}", e),
+            };
             Ok(hyper::Response::new(hyper::Body::from("")))
         }
         _ => Ok(hyper::Response::new(hyper::Body::from(""))),

@@ -14,6 +14,11 @@ impl OtpBucketItem {
             expiry_at: Utc::now().timestamp(),
         }
     }
+
+    fn is_item_older_than_5_mins(&self) -> bool {
+        let five_min_old_time = Utc::now().timestamp().sub(5 * 60);
+        self.expiry_at.gt(&five_min_old_time)
+    }
 }
 
 #[derive(Debug)]
@@ -34,26 +39,40 @@ impl OtpBucket {
     }
 
     pub fn filter_old(mut self) -> Self {
-        let five_min_old_time = Utc::now().timestamp().sub(5 * 60);
-        let entries_greater_than_five_minutes = self
+        let items_greater_than_five_minutes = self
             .0
             .into_iter()
-            .filter(|x| x.expiry_at.gt(&five_min_old_time))
+            .filter(OtpBucketItem::is_item_older_than_5_mins)
             .collect();
-        Self(entries_greater_than_five_minutes)
+        Self(items_greater_than_five_minutes)
+    }
+
+    pub fn verify_otp(&self, otp: u32) -> bool {
+        self.0
+            .iter()
+            .filter(|x| OtpBucketItem::is_item_older_than_5_mins(x))
+            .any(|x| x.otp.eq(&otp))
+    }
+
+    pub fn empty(self) -> Self {
+        Self(vec![])
     }
 }
 
 #[derive(thiserror::Error, Debug)]
-pub enum SendOtpError {
+pub enum OtpError {
     #[error("SendMailError: {}", _0)]
     SendMail(#[from] crate::communication::SendMailError),
     #[error("SerdeError: {}", _0)]
     Serde(#[from] serde_json::Error),
     #[error("DBError: {}", _0)]
     DBError(#[from] db::DBError),
-    #[error("DBError: {}", _0)]
+    #[error("OTPNotFound: {}", _0)]
     OTPNotFound(String),
+    #[error("Expired: {}", _0)]
+    Expired(String),
+    #[error("Expired: {}", _0)]
+    AmbiguousVerificationRequest(String),
 }
 
 fn generate_otp() -> u32 {
@@ -62,18 +81,20 @@ fn generate_otp() -> u32 {
     rng.gen_range(100000..=999_999)
 }
 
-pub async fn send_otp(
-    email: &str,
-    username: &str,
-    db_pool: db::pg::DbPool,
-) -> Result<(), SendOtpError> {
+#[derive(serde::Deserialize)]
+pub struct SendOtpReq {
+    pub email: String,
+    pub phone: Option<String>,
+}
+
+pub async fn send_otp(otp_req: SendOtpReq, db_pool: db::pg::DbPool) -> Result<(), OtpError> {
     let otp = generate_otp();
     let otp_bucket = vec![OtpBucketItem {
         otp,
         expiry_at: chrono::Utc::now().timestamp(),
     }];
     let otp_id = db::auth::otp_upsert(
-        email,
+        otp_req.email.as_str(),
         &serde_json::to_value(&otp_bucket)?,
         "SENDING",
         &db_pool,
@@ -83,14 +104,16 @@ pub async fn send_otp(
     Ok(())
 }
 
-pub async fn resend_otp(email: &str, db_pool: db::pg::DbPool) -> Result<(), SendOtpError> {
-    let db_otp = db::auth::get_otp(email, &db_pool)?.ok_or(SendOtpError::OTPNotFound(format!(
-        "Not otp has entry found with email: {email}"
-    )))?;
+pub async fn resend_otp(otp_req: SendOtpReq, db_pool: db::pg::DbPool) -> Result<(), OtpError> {
+    let db_otp =
+        db::auth::get_otp(otp_req.email.as_str(), &db_pool)?.ok_or(OtpError::OTPNotFound(
+            format!("Not otp has entry found with email: {}", otp_req.email),
+        ))?;
 
     if db_otp.status.eq("VERIFIED") {
-        return Err(SendOtpError::OTPNotFound(format!(
-            "Send otp first before resending it with {email}"
+        return Err(OtpError::OTPNotFound(format!(
+            "Send otp first before resending it with {}",
+            otp_req.email
         )));
     }
 
@@ -104,14 +127,43 @@ pub async fn resend_otp(email: &str, db_pool: db::pg::DbPool) -> Result<(), Send
     Ok(())
 }
 
-pub async fn verify_otp(
-    email: &str,
-    otp: u32,
-    db_pool: db::pg::DbPool,
-) -> Result<(), SendOtpError> {
-    let otp = db::auth::get_otp(email, &db_pool)?.ok_or(SendOtpError::OTPNotFound(format!(
-        "Not otp has entry found with email: {email}"
-    )))?;
+#[derive(serde::Deserialize)]
+pub struct VerifyOtpReq {
+    #[serde(rename = "email")]
+    pub email: String,
+    #[serde(rename = "phone")]
+    pub phone: Option<String>,
+    pub otp: u32,
+}
+
+pub async fn verify_otp(otp_req: VerifyOtpReq, db_pool: db::pg::DbPool) -> Result<(), OtpError> {
+    let db_otp =
+        db::auth::get_otp(otp_req.email.as_str(), &db_pool)?.ok_or(OtpError::OTPNotFound(
+            format!("Not otp has entry found with email: {}", otp_req.email),
+        ))?;
+
+    if db_otp.status.eq("VERIFIED") {
+        return Err(OtpError::AmbiguousVerificationRequest(
+            "otp is already expired".to_string(),
+        ));
+    }
+
+    let otp_bucket = OtpBucket::new(db_otp.otp_bucket)?;
+    if !otp_bucket.verify_otp(otp_req.otp) {
+        return Err(OtpError::Expired(
+            "OTP is expired resend the otp again".to_string(),
+        ));
+    }
+
+    println!("otp is verified");
+    // create a new user here with the new token and expired all the old token
+
+    db::auth::otp_update_bucket(
+        db_otp.id,
+        &otp_bucket.empty().to_value()?,
+        "VERIFIED",
+        &db_pool,
+    )?;
 
     Ok(())
 }
