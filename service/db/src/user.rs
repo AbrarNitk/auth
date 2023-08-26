@@ -24,3 +24,40 @@ pub fn upsert_with_email(email: &str, pool: &crate::pg::DbPool) -> Result<i64, c
         .get_result::<i64>(&mut conn)?;
     Ok(id)
 }
+
+pub fn create_token(
+    user_id: i64,
+    token: &str,
+    pool: &crate::pg::DbPool,
+) -> Result<(), crate::DBError> {
+    use crate::schema::authapp_user_token;
+    let mut conn = pool
+        .get()
+        .map_err(|x| crate::DBError::PooledConnection(x.to_string()))?;
+    conn.transaction(|conn| {
+        let now = chrono::Utc::now();
+        diesel::update(
+            authapp_user_token::dsl::authapp_user_token
+                .filter(authapp_user_token::dsl::user_id.eq(user_id))
+                .filter(authapp_user_token::dsl::active.eq(true)),
+        )
+        .set((
+            authapp_user_token::dsl::active.eq(false),
+            authapp_user_token::dsl::updated_on.eq(now),
+        ))
+        .execute(conn)?;
+
+        diesel::insert_into(authapp_user_token::dsl::authapp_user_token)
+            .values((
+                authapp_user_token::dsl::user_id.eq(user_id),
+                authapp_user_token::dsl::active.eq(true),
+                authapp_user_token::dsl::token.eq(token),
+                authapp_user_token::dsl::created_on.eq(now),
+                authapp_user_token::dsl::updated_on.eq(now),
+            ))
+            .execute(conn)?;
+        diesel::result::QueryResult::Ok(())
+    })?;
+
+    Ok(())
+}

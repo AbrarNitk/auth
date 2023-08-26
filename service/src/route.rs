@@ -30,5 +30,5 @@ pub fn response(body: String, status: hyper::StatusCode) -> hyper::Response<hype
         hyper::header::CONTENT_TYPE,
         hyper::http::HeaderValue::from_static("text/html"),
     );
-    return response;
+    response
 }

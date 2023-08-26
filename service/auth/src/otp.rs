@@ -28,7 +28,7 @@ impl OtpBucket {
     }
 
     pub fn to_value(self) -> Result<serde_json::Value, serde_json::Error> {
-        Ok(serde_json::to_value(self.0)?)
+        serde_json::to_value(self.0)
     }
 
     pub fn append(mut self, value: OtpBucketItem) -> Self {
@@ -67,10 +67,12 @@ pub enum OtpError {
     DBError(#[from] db::DBError),
     #[error("OTPNotFound: {}", _0)]
     OTPNotFound(String),
-    #[error("Expired: {}", _0)]
+    #[error("OTPExpired: {}", _0)]
     Expired(String),
-    #[error("Expired: {}", _0)]
+    #[error("AmbiguousVerificationRequest: {}", _0)]
     AmbiguousVerificationRequest(String),
+    #[error("JWTError: {}", _0)]
+    JWT(#[from] crate::jwt::JWTError),
 }
 
 fn generate_otp() -> u32 {
@@ -102,7 +104,7 @@ pub async fn send_otp(
     }];
     let otp_id = db::otp::otp_upsert(
         otp_req.email.as_str(),
-        &serde_json::to_value(&otp_bucket)?,
+        &serde_json::to_value(otp_bucket)?,
         "SENDING",
         &db_pool,
     )?;
@@ -180,11 +182,12 @@ pub async fn verify_otp(
     }
 
     println!("otp is verified");
-    let id = db::user::upsert_with_email(otp_req.email.as_str(), &db_pool)?;
     // get or create user
+    let user_id = db::user::upsert_with_email(otp_req.email.as_str(), &db_pool)?;
     // generate the token
+    let jwt_token = crate::jwt::create_jwt(user_id.to_string())?;
     // inactive all the active tokens if any and issue the new token
-    // create a new user here with the new token and expired all the old token
+    db::user::create_token(user_id, jwt_token.as_str(), &db_pool)?;
     db::otp::otp_update_bucket(
         db_otp.id,
         &otp_bucket.empty().to_value()?,
@@ -193,6 +196,6 @@ pub async fn verify_otp(
     )?;
 
     Ok(VerifyOtpRes {
-        user_token: "".to_string(),
+        user_token: jwt_token,
     })
 }
