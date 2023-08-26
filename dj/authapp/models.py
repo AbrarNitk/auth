@@ -30,7 +30,7 @@ class CustomUser(DateTimeBase):
 
 
 class UserToken(DateTimeBase):
-    token = models.CharField(max_length=127)
+    token = models.CharField(max_length=255)
     active = models.BooleanField(default=True)
     device_number = models.CharField(max_length=255, null=True)
     user = models.ForeignKey(CustomUser, on_delete=models.PROTECT)
