@@ -19,7 +19,10 @@ pub async fn handler(
             );
             Ok(response)
         }
-        _ => todo!(),
+        _ => Ok(auth::not_found!(format!(
+            "route not found: {}",
+            req.uri().path()
+        ))),
     }
 }
 
@@ -28,7 +31,7 @@ pub fn response(body: String, status: hyper::StatusCode) -> hyper::Response<hype
     *response.status_mut() = status;
     response.headers_mut().append(
         hyper::header::CONTENT_TYPE,
-        hyper::http::HeaderValue::from_static("text/html"),
+        hyper::http::HeaderValue::from_static("application/json"),
     );
     response
 }

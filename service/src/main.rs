@@ -23,7 +23,7 @@ impl hyper::service::Service<hyper::Request<hyper::Body>> for HttpService {
                 Ok(r) => Ok(r),
                 Err(_e) => {
                     dbg!(_e);
-                    unimplemented!()
+                    Ok(auth::server_error!())
                 }
             }
         })
