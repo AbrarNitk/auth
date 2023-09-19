@@ -30,18 +30,21 @@ pub(crate) fn client() -> oauth2::basic::BasicClient {
     )
 }
 
-
 pub(crate) async fn login(
     req: &hyper::Request<hyper::Body>,
 ) -> Result<hyper::Response<hyper::Body>, ()> {
     // TODO: add the next url as query parameter and platform is github
 
-    let host = req.headers().get(hyper::header::HOST).map(|x| x.to_str().unwrap().to_string()).unwrap();
+    let host = req
+        .headers()
+        .get(hyper::header::HOST)
+        .map(|x| x.to_str().unwrap().to_string())
+        .unwrap();
     println!("host: {}, uri: {:?}", host, req.uri());
 
     let scheme = match req.uri().scheme() {
         Some(scheme) => scheme.to_string(),
-        None => "http".to_string()
+        None => "http".to_string(),
     };
 
     println!("scheme {:?}", scheme);
@@ -65,7 +68,6 @@ pub(crate) async fn login(
         .query_pairs_mut()
         .append_pair("prompt", "consent");
 
-
     // Note: setting response with redirect url as authorize url
     let mut resp = hyper::Response::new(hyper::Body::empty());
     let location = hyper::header::HeaderValue::from_bytes(authorize_url.as_str().as_bytes())
@@ -76,12 +78,18 @@ pub(crate) async fn login(
 }
 
 // TODO: remove the unwraps
-pub(crate) async fn callback(req: &hyper::Request<hyper::Body>)-> Result<hyper::Response<hyper::Body>, ()>  {
+pub(crate) async fn callback(
+    req: &hyper::Request<hyper::Body>,
+) -> Result<hyper::Response<hyper::Body>, ()> {
     use oauth2::TokenResponse;
-    let host = req.headers().get(hyper::header::HOST).map(|x| x.to_str().unwrap().to_string()).unwrap();
+    let host = req
+        .headers()
+        .get(hyper::header::HOST)
+        .map(|x| x.to_str().unwrap().to_string())
+        .unwrap();
     let scheme = match req.uri().scheme() {
         Some(scheme) => scheme.to_string(),
-        None => "http".to_string()
+        None => "http".to_string(),
     };
     println!("scheme: {}, host: {:?}", scheme, host);
     let query = url::form_urlencoded::parse(req.uri().query().unwrap().as_bytes())
@@ -91,22 +99,35 @@ pub(crate) async fn callback(req: &hyper::Request<hyper::Body>)-> Result<hyper::
     let code = query.get("code").unwrap();
     let auth_url = format!("{}://{}{}", scheme, host, CALLBACK_URL);
     let client = client().set_redirect_uri(oauth2::RedirectUrl::new(auth_url).unwrap());
-    match client.exchange_code(oauth2::AuthorizationCode::new(code.to_owned()))
-        .request_async(oauth2::reqwest::async_http_client).await {
+    match client
+        .exchange_code(oauth2::AuthorizationCode::new(code.to_owned()))
+        .request_async(oauth2::reqwest::async_http_client)
+        .await
+    {
         Ok(token) => {
-            let t =  token.access_token().secret();
+            let t = token.access_token().secret();
             println!("get the token: {}", t);
-            let cookie_value = format!("gt={}; HttpOnly; Path=/; Domain={}", t, sanitize_port(host.as_str()));
+            let cookie_value = format!(
+                "gt={}; HttpOnly; Path=/; Domain={}",
+                t,
+                sanitize_port(host.as_str())
+            );
             println!("cookie: {}", cookie_value);
             let mut response = hyper::Response::builder()
                 .status(hyper::StatusCode::PERMANENT_REDIRECT)
                 .body(hyper::Body::empty())
                 .unwrap();
 
-            let cookie_header = hyper::header::HeaderValue::from_str(&cookie_value).expect("failed to create the cookie header");
-            response.headers_mut().insert(hyper::header::SET_COOKIE, cookie_header);
-            response.headers_mut().insert(hyper::header::LOCATION, hyper::header::HeaderValue::from_str("/").unwrap());
-            return Ok(response)
+            let cookie_header = hyper::header::HeaderValue::from_str(&cookie_value)
+                .expect("failed to create the cookie header");
+            response
+                .headers_mut()
+                .insert(hyper::header::SET_COOKIE, cookie_header);
+            response.headers_mut().insert(
+                hyper::header::LOCATION,
+                hyper::header::HeaderValue::from_str("/").unwrap(),
+            );
+            return Ok(response);
             // creating the cookies to set in the response
         }
         Err(e) => {
@@ -126,7 +147,7 @@ pub(crate) async fn callback(req: &hyper::Request<hyper::Body>)-> Result<hyper::
 fn sanitize_port(host: &str) -> String {
     match host.split_once(":") {
         Some((domain, _port)) => domain.to_string(),
-        None => host.to_string()
+        None => host.to_string(),
     }
 }
 
@@ -134,5 +155,5 @@ fn sanitize_port(host: &str) -> String {
 pub struct QParams {
     code: String,
     state: String,
-    next: Option<String>
+    next: Option<String>,
 }

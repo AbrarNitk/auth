@@ -1,5 +1,3 @@
-
-
 pub async fn handler(
     req: hyper::Request<hyper::Body>,
     db_pool: db::pg::DbPool,

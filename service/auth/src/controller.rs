@@ -99,10 +99,9 @@ pub async fn routes(
     req: hyper::Request<hyper::Body>,
     db_pool: db::pg::DbPool,
 ) -> Result<hyper::Response<hyper::Body>, crate::error::AuthError> {
-
     // Note: API handler
     if req.uri().path().starts_with("/api/auth/") {
-        return api_handler(req, db_pool).await
+        return api_handler(req, db_pool).await;
     }
 
     // OAuth handler
