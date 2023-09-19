@@ -1,9 +1,9 @@
 export PYTHONPATH=${PROJDIR}/dj
 export DIESEL_CONFIG_FILE=${PROJDIR}/diesel.toml
 
-ROLE_NAME=temp_user
-PASSWORD=temp_pass
-DATABASE_NAME=temp_db
+ROLE_NAME=auth_service
+PASSWORD=auth_service
+DATABASE_NAME=auth_service
 
 export DATABASE_URL=postgres://${ROLE_NAME}:${PASSWORD}@127.0.0.1:5432/${DATABASE_NAME}
 
