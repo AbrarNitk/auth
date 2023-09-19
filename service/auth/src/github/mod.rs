@@ -1,5 +1,3 @@
-use oauth2::TokenResponse;
-
 pub const CALLBACK_URL: &str = "/auth/github/callback/";
 
 static CLIENT_ID: once_cell::sync::Lazy<oauth2::ClientId> = {
@@ -79,22 +77,16 @@ pub(crate) async fn login(
 
 // TODO: remove the unwraps
 pub(crate) async fn callback(req: &hyper::Request<hyper::Body>)-> Result<hyper::Response<hyper::Body>, ()>  {
-
-
+    use oauth2::TokenResponse;
     let host = req.headers().get(hyper::header::HOST).map(|x| x.to_str().unwrap().to_string()).unwrap();
-
-
     let scheme = match req.uri().scheme() {
         Some(scheme) => scheme.to_string(),
         None => "http".to_string()
     };
-
     println!("scheme: {}, host: {:?}", scheme, host);
-
     let query = url::form_urlencoded::parse(req.uri().query().unwrap().as_bytes())
         .into_owned()
         .collect::<std::collections::HashMap<String, String>>();
-
     println!("callback params: {:?}", query);
     let code = query.get("code").unwrap();
     let auth_url = format!("{}://{}{}", scheme, host, CALLBACK_URL);
@@ -124,8 +116,6 @@ pub(crate) async fn callback(req: &hyper::Request<hyper::Body>)-> Result<hyper::
             return Ok(resp);
         }
     }
-
-    // client.exchange_code();
 
     // todo: set the callback url as redirect url, or else redirect it to the home page
     // todo: check the state same as we send in redirect uri as query param
