@@ -44,7 +44,7 @@ pub(crate) async fn login(
 
     let scheme = match req.uri().scheme() {
         Some(scheme) => scheme.to_string(),
-        None => "http".to_string(),
+        None => "https".to_string(),
     };
 
     println!("scheme {:?}", scheme);
@@ -89,7 +89,7 @@ pub(crate) async fn callback(
         .unwrap();
     let scheme = match req.uri().scheme() {
         Some(scheme) => scheme.to_string(),
-        None => "http".to_string(),
+        None => "https".to_string(),
     };
     println!("scheme: {}, host: {:?}", scheme, host);
     let query = url::form_urlencoded::parse(req.uri().query().unwrap().as_bytes())
