@@ -6,7 +6,7 @@ pub async fn handler(
 ) -> Result<hyper::Response<hyper::Body>, http_service::errors::RouteError> {
     println!("{}:{}", req.method(), req.uri().path());
 
-    if req.uri().path().starts_with("/health") {
+    if req.uri().path().starts_with("/auth/health") {
         let mut response = hyper::Response::new(hyper::Body::empty());
         *response.body_mut() = hyper::Body::from(serde_json::json!({"success": true}).to_string());
         *response.status_mut() = hyper::StatusCode::OK;
