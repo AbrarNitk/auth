@@ -45,7 +45,7 @@ fn error(
     Ok(response)
 }
 
-pub async fn routes(
+pub async fn api_handler(
     req: hyper::Request<hyper::Body>,
     db_pool: db::pg::DbPool,
 ) -> Result<hyper::Response<hyper::Body>, crate::error::AuthError> {
@@ -64,7 +64,6 @@ pub async fn routes(
                 }
             }
         }
-
         (&hyper::Method::POST, "/api/auth/resend-otp/") => {
             match crate::otp::resend_otp(from_body(b).await?, db_pool).await {
                 Ok(response) => success(response),
@@ -89,30 +88,37 @@ pub async fn routes(
                 }
             }
         }
-
         _ => Ok(crate::not_found!(serde_json::json!(
                 {"message": format!("route not found: {}", p.uri.path()),"success": false})
         .to_string())),
     }
+}
 
-    // let path = req.uri().path();
-    // let query = url::form_urlencoded::parse(req.uri().query().unwrap_or("").as_bytes())
-    //     .into_owned()
-    //     .collect::<std::collections::HashMap<String, String>>();
-    // match query.get("platform") {
-    //     Some(p) if p.eq("github") => Ok(crate::github::login(&req).await.unwrap()),
-    //     Some(p) if p.eq("gitlab") => Ok(hyper::Response::new(hyper::Body::empty())),
-    //     Some(p) if p.eq("google") => Ok(hyper::Response::new(hyper::Body::empty())),
-    //     Some(p) if p.eq("twitter") => Ok(hyper::Response::new(hyper::Body::empty())),
-    //     Some(p) if p.eq("discord") => Ok(hyper::Response::new(hyper::Body::empty())),
-    //     Some(p) if p.eq("linkedin") => Ok(hyper::Response::new(hyper::Body::empty())),
-    //     _ => {
-    //         let bytes = tokio::fs::read("service/auth/login.html").await?;
-    //         Ok(hyper::Response::new(hyper::Body::from(bytes)))
-    //     }
-    // }
+// todo: remove unwrap and add logging
+pub async fn routes(
+    req: hyper::Request<hyper::Body>,
+    db_pool: db::pg::DbPool,
+) -> Result<hyper::Response<hyper::Body>, crate::error::AuthError> {
 
-    //Ok(hyper::Response::new(hyper::Body::from("")))
+    // Note: API handler
+    if req.uri().path().starts_with("/api/auth/") {
+        return api_handler(req, db_pool).await
+    }
+
+    // OAuth handler
+    match req.uri().path() {
+        "/auth/github/login/" => Ok(crate::github::login(&req).await.unwrap()),
+        "/auth/github/callback/" => Ok(crate::github::callback(&req).await.unwrap()),
+        // Some(p) if p.eq("gitlab") => Ok(hyper::Response::new(hyper::Body::empty())),
+        // Some(p) if p.eq("google") => Ok(hyper::Response::new(hyper::Body::empty())),
+        // Some(p) if p.eq("twitter") => Ok(hyper::Response::new(hyper::Body::empty())),
+        // Some(p) if p.eq("discord") => Ok(hyper::Response::new(hyper::Body::empty())),
+        // Some(p) if p.eq("linkedin") => Ok(hyper::Response::new(hyper::Body::empty())),
+        _ => {
+            let bytes = tokio::fs::read("service/auth/login.html").await?;
+            Ok(hyper::Response::new(hyper::Body::from(bytes)))
+        }
+    }
 }
 
 pub fn response(body: String, status: hyper::StatusCode) -> hyper::Response<hyper::Body> {

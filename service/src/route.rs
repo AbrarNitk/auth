@@ -4,7 +4,7 @@ pub async fn handler(
 ) -> Result<hyper::Response<hyper::Body>, http_service::errors::RouteError> {
     println!("{}:{}", req.method(), req.uri().path());
 
-    if req.uri().path().starts_with("/api/auth/") {
+    if req.uri().path().starts_with("/auth/") || req.uri().path().starts_with("/api/auth/") {
         return Ok(auth::controller::routes(req, db_pool).await?);
     }
 
