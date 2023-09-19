@@ -3,6 +3,6 @@
 .env
 dj/proj/local_settings.py
 local.env
-
+.venv
 
 */**/__pycache__
