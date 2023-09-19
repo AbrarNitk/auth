@@ -1,4 +1,4 @@
-pub const CALLBACK_URL: &str = "/auth/github/callback/?platform=github";
+pub const CALLBACK_URL: &str = "/auth/github/callback/";
 
 static CLIENT_ID: once_cell::sync::Lazy<oauth2::ClientId> = {
     once_cell::sync::Lazy::new(|| {
@@ -40,6 +40,9 @@ pub(crate) async fn login(
     let client = client().set_redirect_uri(oauth2::RedirectUrl::new(callback_url).unwrap());
 
     let (mut authorize_url, _token) = client
+        // this is the state that we are passing, and will receive in the callback url
+        // todo: we must store it some where to validate the request, but for that we will need
+        // user tacker to implement
         .authorize_url(oauth2::CsrfToken::new_random)
         .add_scope(oauth2::Scope::new("user:email".to_string()))
         .add_scope(oauth2::Scope::new("read:user".to_string()))
@@ -47,10 +50,13 @@ pub(crate) async fn login(
         .add_scope(oauth2::Scope::new("public_repo".to_string()))
         .url();
 
+    // Note: asking the consent from user
     authorize_url
         .query_pairs_mut()
         .append_pair("prompt", "consent");
 
+
+    // Note: setting response with redirect url as authorize url
     let mut resp = hyper::Response::new(hyper::Body::empty());
     let location = hyper::header::HeaderValue::from_bytes(authorize_url.as_str().as_bytes())
         .expect("something went wrong");
@@ -60,7 +66,13 @@ pub(crate) async fn login(
 }
 
 pub(crate) async fn callback(_req: &hyper::Request<hyper::Body>)-> Result<hyper::Response<hyper::Body>, ()>  {
-    // todo: set the callback url
+    let client = client().set_redirect_uri(oauth2::RedirectUrl::new(callback_url).unwrap());
+
+    // client.exchange_code();
+
+    // todo: set the callback url as redirect url, or else redirect it to the home page
+    // todo: check the state same as we send in redirect uri as query param
+    // todo: check the scope we asked for all the
     // let query = url::form_urlencoded::parse(req.uri().query().unwrap_or("").as_bytes())
     //     .into_owned()
     //     .collect::<std::collections::HashMap<String, String>>();
