@@ -60,15 +60,17 @@ async fn http_main() -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
         socket_address.ip(),
         socket_address.port()
     );
+    let db_url = db_url.clone();
+    let pool = db::pg::get_connection_pool(db_url.as_str());
     loop {
-        let db_url = db_url.clone();
+        let pool = pool.clone();
         let (tcp_stream, _) = listener.accept().await?;
         tokio::task::spawn(async move {
             if let Err(http_err) = hyper::server::conn::Http::new()
                 .serve_connection(
                     tcp_stream,
                     HttpService {
-                        pool: db::pg::get_connection_pool(db_url.as_str()),
+                        pool,
                     },
                 )
                 .await
