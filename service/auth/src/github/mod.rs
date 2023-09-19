@@ -1,3 +1,5 @@
+use oauth2::TokenResponse;
+
 pub const CALLBACK_URL: &str = "/auth/github/callback/";
 
 static CLIENT_ID: once_cell::sync::Lazy<oauth2::ClientId> = {
@@ -32,11 +34,21 @@ pub(crate) fn client() -> oauth2::basic::BasicClient {
 
 
 pub(crate) async fn login(
-    _req: &hyper::Request<hyper::Body>,
+    req: &hyper::Request<hyper::Body>,
 ) -> Result<hyper::Response<hyper::Body>, ()> {
-
     // TODO: add the next url as query parameter and platform is github
-    let callback_url = format!("http://127.0.0.1:8001{}", CALLBACK_URL);
+
+    let host = req.headers().get(hyper::header::HOST).map(|x| x.to_str().unwrap().to_string()).unwrap();
+    println!("host: {}, uri: {:?}", host, req.uri());
+
+    let scheme = match req.uri().scheme() {
+        Some(scheme) => scheme.to_string(),
+        None => "http".to_string()
+    };
+
+    println!("scheme {:?}", scheme);
+    let callback_url = format!("{}://{}{}", scheme, host, CALLBACK_URL);
+    println!("callback url {}", callback_url);
     let client = client().set_redirect_uri(oauth2::RedirectUrl::new(callback_url).unwrap());
 
     let (mut authorize_url, _token) = client
@@ -65,20 +77,66 @@ pub(crate) async fn login(
     Ok(resp)
 }
 
-pub(crate) async fn callback(_req: &hyper::Request<hyper::Body>)-> Result<hyper::Response<hyper::Body>, ()>  {
-    let client = client().set_redirect_uri(oauth2::RedirectUrl::new(callback_url).unwrap());
+// TODO: remove the unwraps
+pub(crate) async fn callback(req: &hyper::Request<hyper::Body>)-> Result<hyper::Response<hyper::Body>, ()>  {
+
+
+    let host = req.headers().get(hyper::header::HOST).map(|x| x.to_str().unwrap().to_string()).unwrap();
+
+
+    let scheme = match req.uri().scheme() {
+        Some(scheme) => scheme.to_string(),
+        None => "http".to_string()
+    };
+
+    println!("scheme: {}, host: {:?}", scheme, host);
+
+    let query = url::form_urlencoded::parse(req.uri().query().unwrap().as_bytes())
+        .into_owned()
+        .collect::<std::collections::HashMap<String, String>>();
+
+    println!("callback params: {:?}", query);
+    let code = query.get("code").unwrap();
+    let auth_url = format!("{}://{}{}", scheme, host, CALLBACK_URL);
+    let client = client().set_redirect_uri(oauth2::RedirectUrl::new(auth_url).unwrap());
+    match client.exchange_code(oauth2::AuthorizationCode::new(code.to_owned()))
+        .request_async(oauth2::reqwest::async_http_client).await {
+        Ok(token) => {
+            let t =  token.access_token().secret();
+            println!("get the token: {}", t);
+            let cookie_value = format!("gt={}; HttpOnly; Path=/; Domain={}", t, host);
+            println!("cookie: {}", cookie_value);
+            let mut response = hyper::Response::builder()
+                .status(hyper::StatusCode::PERMANENT_REDIRECT)
+                .body(hyper::Body::empty())
+                .unwrap();
+
+            let cookie_header = hyper::header::HeaderValue::from_str(&cookie_value).expect("failed to create the cookie header");
+            response.headers_mut().insert(hyper::header::SET_COOKIE, cookie_header);
+            response.headers_mut().insert(hyper::header::LOCATION, hyper::header::HeaderValue::from_str("/").unwrap());
+            return Ok(response)
+            // creating the cookies to set in the response
+        }
+        Err(e) => {
+            println!("token request error: {}", e);
+            let mut resp = hyper::Response::new(hyper::Body::empty());
+            *resp.status_mut() = hyper::StatusCode::PERMANENT_REDIRECT;
+            return Ok(resp);
+        }
+    }
 
     // client.exchange_code();
 
     // todo: set the callback url as redirect url, or else redirect it to the home page
     // todo: check the state same as we send in redirect uri as query param
     // todo: check the scope we asked for all the
-    // let query = url::form_urlencoded::parse(req.uri().query().unwrap_or("").as_bytes())
-    //     .into_owned()
-    //     .collect::<std::collections::HashMap<String, String>>();
     // we will get the code here send call to the github in exchange with te access_token
-    let mut resp = hyper::Response::new(hyper::Body::empty());
-    *resp.status_mut() = hyper::StatusCode::PERMANENT_REDIRECT;
-    Ok(resp)
 }
 
+
+#[derive(serde::Deserialize)]
+pub struct QParams {
+    code: String,
+    state: String,
+    next: Option<String>
+}

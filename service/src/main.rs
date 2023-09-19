@@ -53,7 +53,7 @@ async fn http_main() -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
     // db::redis::init_redis_pool();
 
     // Creating the tcp listener
-    let socket_address: std::net::SocketAddr = ([0, 0, 0, 0], 8000).into();
+    let socket_address: std::net::SocketAddr = ([0, 0, 0, 0], 8001).into();
     let listener = tokio::net::TcpListener::bind(socket_address).await?;
     println!(
         "#### Started at: {}:{} ####",
