@@ -104,7 +104,7 @@ pub(crate) async fn callback(req: &hyper::Request<hyper::Body>)-> Result<hyper::
         Ok(token) => {
             let t =  token.access_token().secret();
             println!("get the token: {}", t);
-            let cookie_value = format!("gt={}; HttpOnly; Path=/; Domain={}", t, host);
+            let cookie_value = format!("gt={}; HttpOnly; Path=/; Domain={}", t, sanitize_port(host.as_str()));
             println!("cookie: {}", cookie_value);
             let mut response = hyper::Response::builder()
                 .status(hyper::StatusCode::PERMANENT_REDIRECT)
@@ -133,6 +133,12 @@ pub(crate) async fn callback(req: &hyper::Request<hyper::Body>)-> Result<hyper::
     // we will get the code here send call to the github in exchange with te access_token
 }
 
+fn sanitize_port(host: &str) -> String {
+    match host.split_once(":") {
+        Some((domain, _port)) => domain.to_string(),
+        None => host.to_string()
+    }
+}
 
 #[derive(serde::Deserialize)]
 pub struct QParams {
