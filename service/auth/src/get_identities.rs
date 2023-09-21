@@ -31,6 +31,17 @@ pub struct GetIdsResponse {
 pub struct GetIdsError {}
 
 pub async fn get_identities(req: GetIdsRequest) -> Result<GetIdsResponse, GetIdsError> {
+    if let Some(github_token) = req.tokens.iter().find(|t| t.key.eq("auth-gt-token")) {
+        let response = crate::github::apis::get_identities(
+            github_token.value.as_str(),
+            req.identities
+                .iter()
+                .filter(|id| id.key.starts_with("github"))
+                .collect(),
+        )
+        .await;
+    }
+
     Ok(GetIdsResponse {
         expired_token_cookies: vec![],
         success: None,

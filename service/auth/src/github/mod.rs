@@ -1,3 +1,5 @@
+pub mod apis;
+
 pub const CALLBACK_URL: &str = "/auth/github/callback/";
 
 static CLIENT_ID: once_cell::sync::Lazy<oauth2::ClientId> = {
@@ -108,7 +110,7 @@ pub(crate) async fn callback(
             let t = token.access_token().secret();
             println!("get the token: {}", t);
             let cookie_value = format!(
-                "gt={}; HttpOnly; Path=/; Domain={}",
+                "auth-gt-token={}; HttpOnly; Path=/; Domain={}",
                 t,
                 sanitize_port(host.as_str())
             );

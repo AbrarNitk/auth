@@ -5,8 +5,9 @@ pub mod get_identities;
 mod github;
 pub mod jwt;
 pub mod otp;
-
 pub mod utils;
+
+pub use get_identities::Identity;
 
 pub(crate) static BREVO_API_KEY: once_cell::sync::Lazy<String> = {
     once_cell::sync::Lazy::new(|| match std::env::var("BREVO_API_KEY") {
