@@ -3,6 +3,7 @@ pub mod controller;
 pub mod error;
 pub mod get_identities;
 mod github;
+pub mod http;
 pub mod jwt;
 pub mod otp;
 pub mod utils;
