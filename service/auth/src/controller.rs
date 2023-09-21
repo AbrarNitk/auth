@@ -108,6 +108,19 @@ pub async fn routes(
     match req.uri().path() {
         "/auth/github/login/" => Ok(crate::github::login(&req).await.unwrap()),
         "/auth/github/callback/" => Ok(crate::github::callback(&req).await.unwrap()),
+        "/auth/get-identities/" => {
+            let (_p, b) = req.into_parts();
+            match crate::get_identities::get_identities(from_body(b).await?).await {
+                Ok(response) => success(response),
+                Err(err) => {
+                    println!("err:re_send_otp: {:?}", err);
+                    error(
+                        "server error".to_string(),
+                        hyper::StatusCode::INTERNAL_SERVER_ERROR,
+                    )
+                }
+            }
+        }
         // Some(p) if p.eq("gitlab") => Ok(hyper::Response::new(hyper::Body::empty())),
         // Some(p) if p.eq("google") => Ok(hyper::Response::new(hyper::Body::empty())),
         // Some(p) if p.eq("twitter") => Ok(hyper::Response::new(hyper::Body::empty())),

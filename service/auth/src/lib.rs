@@ -1,6 +1,7 @@
 pub mod communication;
 pub mod controller;
 pub mod error;
+pub mod get_identities;
 mod github;
 pub mod jwt;
 pub mod otp;
