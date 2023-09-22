@@ -24,7 +24,7 @@ pub struct GetIdsResponse {
     // send only one success, because we are checking as OR
     // or no success
     // note: telling which identity got success
-    success: Option<Identity>,
+    success: bool,
 }
 
 #[derive(Debug, serde::Serialize)]
@@ -32,19 +32,29 @@ pub struct GetIdsError {}
 
 pub async fn get_identities(req: GetIdsRequest) -> Result<GetIdsResponse, GetIdsError> {
     if let Some(github_token) = req.tokens.iter().find(|t| t.key.eq("auth-gt-token")) {
-        let response = crate::github::apis::get_identities(
+        return match crate::github::apis::get_identities(
             github_token.value.as_str(),
             req.identities
                 .iter()
                 .filter(|id| id.key.starts_with("github"))
                 .collect(),
         )
-        .await;
+        .await
+        {
+            Ok(flag) => Ok(GetIdsResponse {
+                expired_token_cookies: vec![],
+                success: flag,
+            }),
+            Err(err) => Ok(GetIdsResponse {
+                expired_token_cookies: vec![],
+                success: false,
+            }),
+        };
     }
 
     Ok(GetIdsResponse {
         // todo: do it later
         expired_token_cookies: vec![],
-        success: None,
+        success: false,
     })
 }
