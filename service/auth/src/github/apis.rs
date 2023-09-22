@@ -79,6 +79,12 @@ pub async fn is_repo_starred(
             if r.status() == reqwest::StatusCode::NO_CONTENT {
                 Ok(true)
             } else {
+                eprintln!(
+                    "api error repo_name:{},  status {}, body: {:?} ",
+                    repo_name,
+                    r.status(),
+                    r.text().await
+                );
                 Ok(false)
             }
         }
