@@ -108,6 +108,8 @@ pub async fn routes(
     match req.uri().path() {
         "/auth/github/login/" => Ok(crate::github::login(&req).await.unwrap()),
         "/auth/github/callback/" => Ok(crate::github::callback(&req).await.unwrap()),
+
+        // Note: send the cookies starts with auth-
         "/auth/get-identities/" => {
             let (_p, b) = req.into_parts();
             match crate::get_identities::get_identities(from_body(b).await?).await {
