@@ -43,6 +43,7 @@ fn read_env() -> String {
 
 async fn http_main() -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
     // Setting the environment variables
+    tracing_subscriber::fmt().init();
     let env_path = format!("{}.env", read_env());
     dotenv::from_path(env_path.as_str()).ok();
     tracing::info!("Environment set: {}", env_path);
