@@ -2,7 +2,7 @@ pub async fn handler(
     req: hyper::Request<hyper::Body>,
     db_pool: db::pg::DbPool,
 ) -> Result<hyper::Response<hyper::Body>, http_service::errors::RouteError> {
-    println!("{}:{}", req.method(), req.uri().path());
+    tracing::info!(method = req.method().as_str(), path = req.uri().path());
 
     if req.uri().path().starts_with("/auth/health") {
         let mut response = hyper::Response::new(hyper::Body::empty());
@@ -16,6 +16,7 @@ pub async fn handler(
     }
 
     if req.uri().path().starts_with("/auth/") || req.uri().path().starts_with("/v1/api/auth/") {
+        // todo: handle the error here only
         return Ok(auth::controller::routes(req, db_pool).await?);
     }
 

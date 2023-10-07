@@ -21,8 +21,8 @@ impl hyper::service::Service<hyper::Request<hyper::Body>> for HttpService {
         Box::pin(async move {
             match service::route::handler(req, pool).await {
                 Ok(r) => Ok(r),
-                Err(_e) => {
-                    dbg!(_e);
+                Err(e) => {
+                    tracing::error!(message = "error:route::handler", error = format!("{e}"));
                     Ok(service::controller::response(
                         serde_json::json!({"message": "Internal Server Error","success": false})
                             .to_string(),
@@ -45,7 +45,7 @@ async fn http_main() -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
     // Setting the environment variables
     let env_path = format!("{}.env", read_env());
     dotenv::from_path(env_path.as_str()).ok();
-    println!("Environment set: {}", env_path);
+    tracing::info!("Environment set: {}", env_path);
 
     let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL env var not found");
     // Initializing the database pool
@@ -54,7 +54,7 @@ async fn http_main() -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
     // Creating the tcp listener
     let socket_address: std::net::SocketAddr = ([0, 0, 0, 0], 8001).into();
     let listener = tokio::net::TcpListener::bind(socket_address).await?;
-    println!(
+    tracing::info!(
         "#### Started at: {}:{} ####",
         socket_address.ip(),
         socket_address.port()
