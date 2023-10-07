@@ -34,7 +34,7 @@ impl hyper::service::Service<hyper::Request<hyper::Body>> for HttpService {
     }
 }
 
-fn env() -> String {
+fn read_env() -> String {
     match std::env::var("ENV") {
         Ok(env) => env.to_lowercase(),
         Err(_) => "local".to_string(),
@@ -43,13 +43,12 @@ fn env() -> String {
 
 async fn http_main() -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
     // Setting the environment variables
-    let env_path = format!("{}.env", env());
+    let env_path = format!("{}.env", read_env());
     dotenv::from_path(env_path.as_str()).ok();
     println!("Environment set: {}", env_path);
 
     let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL env var not found");
     // Initializing the database pool
-    // db::pg::init_db_pool();
     // db::redis::init_redis_pool();
 
     // Creating the tcp listener
@@ -67,12 +66,7 @@ async fn http_main() -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
         let (tcp_stream, _) = listener.accept().await?;
         tokio::task::spawn(async move {
             if let Err(http_err) = hyper::server::conn::Http::new()
-                .serve_connection(
-                    tcp_stream,
-                    HttpService {
-                        pool,
-                    },
-                )
+                .serve_connection(tcp_stream, HttpService { pool })
                 .await
             {
                 eprintln!("Error while serving HTTP connection: {}", http_err);

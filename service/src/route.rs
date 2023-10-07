@@ -15,7 +15,7 @@ pub async fn handler(
         return Ok(response);
     }
 
-    if req.uri().path().starts_with("/auth/") || req.uri().path().starts_with("/api/auth/") {
+    if req.uri().path().starts_with("/auth/") || req.uri().path().starts_with("/v1/api/auth/") {
         return Ok(auth::controller::routes(req, db_pool).await?);
     }
 
