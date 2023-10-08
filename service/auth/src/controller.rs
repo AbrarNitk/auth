@@ -52,7 +52,7 @@ pub async fn api_handler(
     let (p, b) = req.into_parts();
     let _start = std::time::Instant::now();
     match (&p.method, p.uri.path()) {
-        (&hyper::Method::POST, "/api/auth/send-otp/") => {
+        (&hyper::Method::POST, "/v1/api/auth/send-otp/") => {
             match crate::otp::send_otp(from_body(b).await?, db_pool).await {
                 Ok(response) => success(response),
                 Err(err) => {
@@ -64,7 +64,7 @@ pub async fn api_handler(
                 }
             }
         }
-        (&hyper::Method::POST, "/api/auth/resend-otp/") => {
+        (&hyper::Method::POST, "/v1/api/auth/resend-otp/") => {
             match crate::otp::resend_otp(from_body(b).await?, db_pool).await {
                 Ok(response) => success(response),
                 Err(err) => {
@@ -76,7 +76,7 @@ pub async fn api_handler(
                 }
             }
         }
-        (&hyper::Method::POST, "/api/auth/verify-otp/") => {
+        (&hyper::Method::POST, "/v1/api/auth/verify-otp/") => {
             match crate::otp::verify_otp(from_body(b).await?, db_pool).await {
                 Ok(response) => success(response),
                 Err(err) => {
@@ -100,7 +100,7 @@ pub async fn routes(
     db_pool: db::pg::DbPool,
 ) -> Result<hyper::Response<hyper::Body>, crate::error::AuthError> {
     // Note: API handler
-    if req.uri().path().starts_with("/api/auth/") {
+    if req.uri().path().starts_with("/v1/api/auth/") {
         return api_handler(req, db_pool).await;
     }
 
