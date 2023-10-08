@@ -23,6 +23,10 @@ fn success(
 
     let mut response = hyper::Response::new(hyper::Body::from(resp));
     *response.status_mut() = hyper::StatusCode::OK;
+    response.headers_mut().append(
+        hyper::header::CONTENT_TYPE,
+        hyper::http::HeaderValue::from_str("application/json").unwrap(), // TODO: Remove unwrap
+    )
     Ok(response)
 }
 
