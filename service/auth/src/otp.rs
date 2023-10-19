@@ -181,7 +181,7 @@ pub async fn verify_otp(
         ));
     }
 
-    println!("otp is verified");
+    tracing::info!(message="otp is verified", email=otp_req.email);
     // get or create user
     let user_id = db::user::upsert_with_email(otp_req.email.as_str(), &db_pool)?;
     // generate the token
