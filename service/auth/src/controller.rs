@@ -60,7 +60,7 @@ pub async fn api_handler(
             match crate::otp::send_otp(from_body(b).await?, db_pool).await {
                 Ok(response) => success(response),
                 Err(err) => {
-                    println!("err:send_otp: {}", err);
+                    tracing::error!(mesage="err:send_otp", error=err.to_string());
                     error(
                         "server error".to_string(),
                         hyper::StatusCode::INTERNAL_SERVER_ERROR,
@@ -72,7 +72,7 @@ pub async fn api_handler(
             match crate::otp::resend_otp(from_body(b).await?, db_pool).await {
                 Ok(response) => success(response),
                 Err(err) => {
-                    println!("err:re_send_otp: {}", err);
+                    tracing::error!(message="err:re_send_otp", error=err.to_string());
                     error(
                         "server error".to_string(),
                         hyper::StatusCode::INTERNAL_SERVER_ERROR,
@@ -84,7 +84,7 @@ pub async fn api_handler(
             match crate::otp::verify_otp(from_body(b).await?, db_pool).await {
                 Ok(response) => success(response),
                 Err(err) => {
-                    println!("err:re_send_otp: {}", err);
+                    tracing::error!(message="err:re_send_otp", error=err.to_string());
                     error(
                         "server error".to_string(),
                         hyper::StatusCode::INTERNAL_SERVER_ERROR,

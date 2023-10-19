@@ -108,7 +108,7 @@ pub async fn send_otp(
         "SENDING",
         &db_pool,
     )?;
-    // crate::communication::send_email(otp, email, username).await?;
+    crate::communication::send_email(otp, otp_req.email.as_str()).await?;
     db::otp::otp_update_status(otp_id, "SEND", &db_pool)?;
     Ok(SendOtpRes {
         email: otp_req.email,
