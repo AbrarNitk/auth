@@ -137,7 +137,7 @@ pub async fn resend_otp(
         .filter_old()
         .append(OtpBucketItem::new(new_otp));
     db::otp::otp_update_bucket(db_otp.id, &otp_bucket.to_value()?, "RESENDING", &db_pool)?;
-    // crate::communication::send_email(new_otp, email, username).await?;
+    crate::communication::send_email(new_otp, otp_req.email.as_str()).await?;
     db::otp::otp_update_status(db_otp.id, "RESEND", &db_pool)?;
     Ok(SendOtpRes {
         email: otp_req.email,
