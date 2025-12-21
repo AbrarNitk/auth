@@ -117,7 +117,7 @@ pub(crate) async fn callback(
             println!("cookie: {}", cookie_value);
             let mut response = hyper::Response::builder()
                 .status(hyper::StatusCode::PERMANENT_REDIRECT)
-                .body(hyper::Body::empty())
+                .body("")
                 .unwrap();
 
             let cookie_header = hyper::header::HeaderValue::from_str(&cookie_value)
@@ -134,7 +134,7 @@ pub(crate) async fn callback(
         }
         Err(e) => {
             println!("token request error: {}", e);
-            let mut resp = hyper::Response::new(hyper::Body::empty());
+            let mut resp = hyper::Response::new("");
             *resp.status_mut() = hyper::StatusCode::PERMANENT_REDIRECT;
             return Ok(resp);
         }

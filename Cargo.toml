@@ -1,6 +1,7 @@
 [workspace]
 members = ["service", "service/db", "service/auth", "service/ai"]
 exclude = ["etc", "dj"]
+resolver = "2"
 
 [workspace.dependencies]
 thiserror = "1"
@@ -11,6 +12,6 @@ serde_derive = "1"
 tracing = "0.1"
 tracing-subscriber = "0.3"
 tracing-forest = { version= "0.1", features = [ "ansi", "smallvec", "serde", "tokio" ] }
-hyper = {version = "0.14", features = ["full"] }
+hyper = {version = "1.8", features = ["full"] }
 tokio = { version = "1", features = ["full"] }
-chrono = "0.4.26"
+chrono = "0.4"
