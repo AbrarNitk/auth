@@ -1,4 +1,5 @@
 use hyper::body::Incoming;
+use service::settings::Settings;
 
 pub struct HttpService {
     pool: db::pg::DbPool,
@@ -35,43 +36,6 @@ pub fn read_env() -> String {
         Err(_) => "local".to_string(),
     }
 }
-
-async fn http_main() -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
-    // Setting the environment variables
-    // tracing_subscriber::fmt().init();
-    // let env_path = format!("{}.env", read_env());
-    // dotenv::from_path(env_path.as_str()).ok();
-    // tracing::info!("Environment set: {}", env_path);
-
-    // let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL env var not found");
-    // Initializing the database pool
-    // db::redis::init_redis_pool();
-
-    // Creating the tcp listener
-    // let socket_address: std::net::SocketAddr = ([0, 0, 0, 0], 8001).into();
-    // let listener = tokio::net::TcpListener::bind(socket_address).await?;
-    // tracing::info!(
-    //     "#### Started at: {}:{} ####",
-    //     socket_address.ip(),
-    //     socket_address.port()
-    // );
-    // let db_url = db_url.clone();
-    // let pool = db::pg::get_connection_pool(db_url.as_str());
-    // loop {
-    //     let pool = pool.clone();
-    //     let (tcp_stream, _) = listener.accept().await?;
-    //     tokio::task::spawn(async move {
-    //         if let Err(http_err) = hyper::server::conn::http1::Builder::new()
-    //             .serve_connection(  tcp_stream, HttpService { pool })
-    //             .await
-    //         {
-    //             eprintln!("Error while serving HTTP connection: {}", http_err);
-    //         }
-    //     });
-    // }
-    todo!()
-}
-
 fn main() {
     tokio::runtime::Builder::new_multi_thread()
         .enable_all()
@@ -79,4 +43,37 @@ fn main() {
         .unwrap()
         .block_on(http_main())
         .unwrap();
+}
+
+pub async fn http_main() -> std::io::Result<()> {
+    let s = Settings::new_with_file("etc/settings", "dev").expect("wrong settings");
+    println!("settings: {:?}", s);
+    Ok(())
+}
+
+pub async fn listener(ctx: base::Ctx, host: String, port: u16) -> std::io::Result<()> {
+    // settings the opentelemetry protocol so jaeger can consume the logs
+
+    tracing::info!(message = "project settings configured");
+
+    //Creating the listener on provided bind address and port
+    let listener =
+        tokio::net::TcpListener::bind(std::net::SocketAddr::new(host.parse().unwrap(), port))
+            .await?;
+
+    tracing::info!(
+        message = "#### Server Started ####",
+        bind = listener.local_addr().unwrap().ip().to_string(),
+        port = listener.local_addr().unwrap().port()
+    );
+
+    let router = service::routes::routes(ctx);
+    // let router = router.nest_service("/", ServeDir::new("./frontend/dist"));
+
+    //Starting the application on the listener with the application router
+    axum::serve(listener, router)
+        // .with_graceful_shutdown(shutdown_signal)
+        .await?;
+    // services::tracer::opob::shutdown_tracer();
+    Ok(())
 }

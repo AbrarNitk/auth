@@ -48,3 +48,26 @@ pub mod redis {
         pub idle_timeout: Option<u64>,
     }
 }
+
+pub mod telemetry {
+
+    #[derive(Debug, serde::Deserialize)]
+    pub struct TelemetrySettings {
+        #[serde(rename = "otel-exporter-otlp-protocol")]
+        pub otel_exporter_otlp_protocol: String,
+        #[serde(rename = "otel-exporter-otlp-endpoint")]
+        pub otel_exporter_otlp_endpoint: String,
+        #[serde(rename = "otel-service-name")]
+        pub otel_service_name: String,
+        #[serde(rename = "log-level")]
+        pub log_level: String,
+        #[serde(rename = "username")]
+        pub username: String,
+        #[serde(rename = "password")]
+        pub password: String,
+        #[serde(rename = "org-name")]
+        pub org_name: String,
+        #[serde(rename = "stream-name")]
+        pub stream_name: String,
+    }
+}

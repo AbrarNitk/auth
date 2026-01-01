@@ -1,0 +1,42 @@
+[service]
+environment = "dev"
+
+[redis]
+url = "redis://localhost"
+max-size = 5
+min-idle = 2
+max-lifetime = 30 # minutes
+idle-timeout = 10 # minutes
+connection-timeout = 60 # seconds
+
+
+[telemetry]
+otel-exporter-otlp-endpoint = "http://127.0.0.1:4317"
+log-level = "debug,h2=warn"
+username = "todo"
+password = "todo"
+org-name = "todo"
+stream-name = "todo"
+
+[dex]
+client-id = "dex-idp-app"
+client-secret = "xxxxx"
+issuer-url = "http://127.0.0.1:5556/dex"
+token-url = "http://127.0.0.1:5556/dex/token"
+callback-url = "http://127.0.0.1:8001/v2/api/authn/callback"
+scopes = [
+  "openid",
+  "profile",
+  "email",
+  "offline_access"
+]
+
+[[dex.connectors]]
+type = "oidc"
+id = "auth0"
+name = "Auth0"
+
+[[dex.connectors]]
+type = "google"
+id = "google"
+name = "Google"

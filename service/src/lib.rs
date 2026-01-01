@@ -4,3 +4,4 @@ pub mod controller;
 pub mod errors;
 pub mod route;
 pub mod routes;
+pub mod settings;

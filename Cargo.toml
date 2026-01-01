@@ -18,6 +18,7 @@ hyper = {version = "1.8", features = ["full"] }
 tokio = { version = "1", features = ["full"] }
 chrono = "0.4"
 http-body-util = "0.1"
+config = "0.15"
 
 # Storage and Database related deps
 bb8 = "0.9"
