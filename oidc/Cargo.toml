@@ -4,3 +4,31 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+tokio = { workspace = true }
+axum = { workspace = true, features = ["multipart"] }
+axum-extra = { workspace = true, features = ["cookie"] }
+time = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+chrono = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+ulid = { workspace = true }
+thiserror = { workspace = true }
+sqlx = { workspace = true }
+url = { workspace = true }
+itertools = { workspace = true }
+percent-encoding = { workspace = true }
+bb8-redis = { workspace = true }
+reqwest = { workspace = true }
+
+hmac = "0.12"
+sha2 = "0.10.9"
+hex = "0.4.3"
+base64 = "0.22"
+openidconnect = "4.0"
+rand = "0.9.2"
+
+
+# Crates Deps
+base = { path = "../crates/base" }
