@@ -532,12 +532,14 @@ dependencies = [
 name = "db"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "chrono",
  "diesel",
  "once_cell",
  "serde",
  "serde_derive",
  "serde_json",
+ "sqlx",
  "thiserror 2.0.17",
 ]
 
@@ -2460,6 +2462,7 @@ name = "service"
 version = "0.1.0"
 dependencies = [
  "ai",
+ "anyhow",
  "auth",
  "axum",
  "base",
@@ -2472,6 +2475,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
+ "sqlx",
  "thiserror 2.0.17",
  "tokio",
  "tracing",

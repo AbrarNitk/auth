@@ -47,7 +47,15 @@ fn main() {
 
 pub async fn http_main() -> std::io::Result<()> {
     let s = Settings::new_with_file("etc/settings", "dev").expect("wrong settings");
-    println!("settings: {:?}", s);
+
+    let app_ctx = service::ctx::application_ctx(&s)
+        .await
+        .expect("application ctx error");
+
+    listener(app_ctx, s.service.bind, s.service.port)
+        .await
+        .expect("error in starting the server");
+
     Ok(())
 }
 

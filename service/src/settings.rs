@@ -8,11 +8,20 @@ pub struct Settings {
     // pub(crate) openfga: OpenFGASettings,
     #[serde(rename = "dex")]
     pub dex: base::ctx::settings::dex::DexSettings,
+
+    pub postgres: Pg,
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct Pg {
+    pub url: String,
 }
 
 #[derive(Debug, serde::Deserialize)]
 pub struct ServiceSettings {
     pub environment: String,
+    pub bind: String,
+    pub port: u16,
 }
 
 impl Settings {

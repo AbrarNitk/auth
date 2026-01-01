@@ -20,6 +20,8 @@ tracing-subscriber = { workspace = true }
 tracing-forest = { workspace = true }
 dotenv = "0.15"
 config = { workspace = true }
+sqlx = { workspace = true }
+anyhow = { workspace = true }
 
 db = { path = "./db" }
 auth = { path = "./auth" }
