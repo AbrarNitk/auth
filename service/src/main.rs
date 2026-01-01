@@ -52,6 +52,12 @@ pub async fn http_main() -> std::io::Result<()> {
         .await
         .expect("application ctx error");
 
+    println!("project settings configured");
+
+    service::tracer::init_open_telemetry_otlp(&s.telemetry);
+
+    tracing::info!(message = "tracer configured");
+
     listener(app_ctx, s.service.bind, s.service.port)
         .await
         .expect("error in starting the server");
@@ -61,8 +67,6 @@ pub async fn http_main() -> std::io::Result<()> {
 
 pub async fn listener(ctx: base::Ctx, host: String, port: u16) -> std::io::Result<()> {
     // settings the opentelemetry protocol so jaeger can consume the logs
-
-    tracing::info!(message = "project settings configured");
 
     //Creating the listener on provided bind address and port
     let listener =

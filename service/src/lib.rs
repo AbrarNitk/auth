@@ -6,3 +6,4 @@ pub mod errors;
 pub mod route;
 pub mod routes;
 pub mod settings;
+pub mod tracer;

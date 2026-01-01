@@ -11,9 +11,6 @@ once_cell = "1"  # todo: to be removed
 serde = { version = "1", features = ["derive"]}
 serde_json = "1"
 serde_derive = "1"
-tracing = "0.1"
-tracing-subscriber = "0.3"
-tracing-forest = { version= "0.1", features = [ "ansi", "smallvec", "serde", "tokio" ] }
 hyper = {version = "1.8", features = ["full"] }
 tokio = { version = "1", features = ["full"] }
 chrono = "0.4"
@@ -29,3 +26,21 @@ sqlx = { version = "0.8", features = [
     "runtime-tokio",
 ] }
 bb8-redis = "0.24"
+
+
+# Logs and tracing
+tracing = "0.1.40"
+opentelemetry = "0.30"
+opentelemetry_sdk = { version = "0.30", features = ["rt-tokio"] }
+tracing-opentelemetry = "0.31"
+opentelemetry-otlp = { version = "0.30", features = [
+    "http-proto",
+    "tls",
+    "grpc-tonic",
+    "metrics",
+] }
+opentelemetry-stdout = { version = "0.30", features = ["trace"] }
+opentelemetry-semantic-conventions = "0.30"
+tracing-bunyan-formatter = "0.3"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-forest = { version= "0.1", features = [ "ansi", "smallvec", "serde", "tokio" ] }
