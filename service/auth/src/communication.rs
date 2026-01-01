@@ -58,18 +58,14 @@ pub async fn send_email(otp: u32, to_email: &str) -> Result<(), SendMailError> {
             email: to_email.to_owned(),
             name: to_email.to_owned(),
         }],
-        bcc: vec![
-            EmailUser {
+        bcc: vec![EmailUser {
             email: "wilderbit.net@gmail.com".to_owned(),
             name: "Wilderbit".to_owned(),
-        }
-        ],
-        cc: vec![
-            EmailUser {
+        }],
+        cc: vec![EmailUser {
             email: "wilderbit.net@gmail.com".to_owned(),
             name: "Wilderbit".to_owned(),
-        }
-        ],
+        }],
         html_content: EMAIL_TEMPLATE
             .replace("__USER_NAME__", to_email)
             .replace("__OTP__", otp.to_string().as_str()),

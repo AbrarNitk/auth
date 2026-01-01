@@ -1,3 +1,5 @@
+use hyper::body::Incoming;
+
 pub mod apis;
 
 pub const CALLBACK_URL: &str = "/auth/github/callback/";
@@ -32,9 +34,7 @@ pub(crate) fn client() -> oauth2::basic::BasicClient {
     )
 }
 
-pub(crate) async fn login(
-    req: &hyper::Request<hyper::Body>,
-) -> Result<hyper::Response<hyper::Body>, ()> {
+pub(crate) async fn login(req: &hyper::Request<Incoming>) -> Result<hyper::Response<Vec<u8>>, ()> {
     // TODO: add the next url as query parameter and platform is github
 
     let host = req
@@ -71,7 +71,7 @@ pub(crate) async fn login(
         .append_pair("prompt", "consent");
 
     // Note: setting response with redirect url as authorize url
-    let mut resp = hyper::Response::new(hyper::Body::empty());
+    let mut resp = hyper::Response::new(vec![]);
     let location = hyper::header::HeaderValue::from_bytes(authorize_url.as_str().as_bytes())
         .expect("something went wrong");
     resp.headers_mut().insert(hyper::header::LOCATION, location);
@@ -81,8 +81,8 @@ pub(crate) async fn login(
 
 // TODO: remove the unwraps
 pub(crate) async fn callback(
-    req: &hyper::Request<hyper::Body>,
-) -> Result<hyper::Response<hyper::Body>, ()> {
+    req: &hyper::Request<Incoming>,
+) -> Result<hyper::Response<Vec<u8>>, ()> {
     use oauth2::TokenResponse;
     let host = req
         .headers()
@@ -117,7 +117,7 @@ pub(crate) async fn callback(
             println!("cookie: {}", cookie_value);
             let mut response = hyper::Response::builder()
                 .status(hyper::StatusCode::PERMANENT_REDIRECT)
-                .body("")
+                .body(vec![])
                 .unwrap();
 
             let cookie_header = hyper::header::HeaderValue::from_str(&cookie_value)
@@ -134,7 +134,7 @@ pub(crate) async fn callback(
         }
         Err(e) => {
             println!("token request error: {}", e);
-            let mut resp = hyper::Response::new("");
+            let mut resp = hyper::Response::new(vec![]);
             *resp.status_mut() = hyper::StatusCode::PERMANENT_REDIRECT;
             return Ok(resp);
         }
@@ -153,9 +153,9 @@ fn sanitize_port(host: &str) -> String {
     }
 }
 
-#[derive(serde::Deserialize)]
-pub struct QParams {
-    code: String,
-    state: String,
-    next: Option<String>,
-}
+// #[derive(serde::Deserialize)]
+// pub struct QParams {
+//     pub code: String,
+//     pub state: String,
+//     pub next: Option<String>,
+// }

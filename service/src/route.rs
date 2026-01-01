@@ -1,12 +1,16 @@
+use hyper::body::Incoming;
+
 pub async fn handler(
-    req: hyper::Request<hyper::Body>,
+    req: hyper::Request<Incoming>,
     db_pool: db::pg::DbPool,
-) -> Result<hyper::Response<hyper::Body>, http_service::errors::RouteError> {
+) -> Result<hyper::Response<Vec<u8>>, http_service::errors::RouteError> {
     tracing::info!(method = req.method().as_str(), path = req.uri().path());
 
     if req.uri().path().starts_with("/auth/health") {
-        let mut response = hyper::Response::new(hyper::Body::empty());
-        *response.body_mut() = hyper::Body::from(serde_json::json!({"success": true}).to_string());
+        let mut response = hyper::Response::new(vec![]);
+        *response.body_mut() = serde_json::json!({"success": true})
+            .to_string()
+            .into_bytes();
         *response.status_mut() = hyper::StatusCode::OK;
         response.headers_mut().append(
             hyper::header::CONTENT_TYPE,
@@ -25,12 +29,11 @@ pub async fn handler(
     }
 
     match (req.method(), req.uri().path()) {
-        (&hyper::Method::GET, "/") => Ok(hyper::Response::new(hyper::Body::from(
+        (&hyper::Method::GET, "/") => Ok(hyper::Response::new(
             tokio::fs::read("service/index.html").await?,
-        ))),
+        )),
         (&hyper::Method::POST, "/") => {
-            let mut response = hyper::Response::new(hyper::Body::empty());
-            *response.body_mut() = hyper::Body::from("POST Response");
+            let mut response = hyper::Response::new(vec![]);
             *response.status_mut() = hyper::StatusCode::OK;
             response.headers_mut().append(
                 hyper::header::CONTENT_TYPE,

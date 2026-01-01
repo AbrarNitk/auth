@@ -45,7 +45,7 @@ pub async fn get_identities(req: GetIdsRequest) -> Result<GetIdsResponse, GetIds
                 expired_token_cookies: vec![],
                 success: flag,
             }),
-            Err(err) => Ok(GetIdsResponse {
+            Err(_err) => Ok(GetIdsResponse {
                 expired_token_cookies: vec![],
                 success: false,
             }),

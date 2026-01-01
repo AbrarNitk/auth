@@ -15,3 +15,4 @@ tracing-forest = { version= "0.1", features = [ "ansi", "smallvec", "serde", "to
 hyper = {version = "1.8", features = ["full"] }
 tokio = { version = "1", features = ["full"] }
 chrono = "0.4"
+http-body-util = "0.1"
