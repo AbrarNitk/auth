@@ -1,0 +1,15 @@
+[package]
+name = "base"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+
+## data related deps
+bb8 = { workspace = true }
+sqlx = { workspace = true }
+bb8-redis = { workspace = true }
