@@ -1,0 +1,20 @@
+meta {
+  name: AuthN Url Redirect
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://{{host}}:{{port}}/v1/api/authn/login?api=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  api: true
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

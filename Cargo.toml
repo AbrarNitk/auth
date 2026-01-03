@@ -5,7 +5,7 @@ resolver = "2"
 
 [workspace.dependencies]
 axum = "0.8"
-axum-extra = { version = "0.9", features = ["cookie"] }
+axum-extra = { version = "0.12", features = ["cookie"] }
 itertools = "0.14"
 tower = "0.5"
 thiserror = "2.0"

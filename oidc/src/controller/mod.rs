@@ -53,6 +53,33 @@ pub async fn login_with(
     }
 }
 
-pub async fn authn_callback() -> Response {
-    todo!()
+#[derive(Debug, serde::Deserialize)]
+pub struct CallbackQuery {
+    pub code: String,
+    pub state: String,
+}
+
+#[derive(Debug)]
+pub struct CallbackResult {
+    pub user_id: String,
+    pub session_id: String,
+    pub next_url: String,
+}
+
+// handles the callback from dex with different connectors and organisations
+#[tracing::instrument(name = "authn::login-callback", skip_all, parent = None)]
+pub async fn authn_callback(
+    State(ctx): State<base::Ctx>,
+    Extension(client_info): Extension<base::ReqClientInfo>,
+    Query(query): Query<CallbackQuery>,
+    _jar: CookieJar,
+) -> Response {
+    tracing::info!(msg = "authn:login:callback", client_info = ?client_info);
+    match crate::service::callback::handle(&ctx, &client_info, &query.code, &query.state).await {
+        Ok(signin_session) => base::response::success::success(signin_session),
+        Err(err) => {
+            tracing::error!(msg="login-callback-error", err=?err);
+            base::response::errors::error("req_id", err)
+        }
+    }
 }

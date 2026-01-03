@@ -22,21 +22,16 @@ stream-name = "todo"
 
 [dex]
 client-id = "dex-idp-app"
-client-secret = "xxxxx"
+client-secret = "ZXhhbXBsZS1hcHAtc2VjcmV0"
 issuer-url = "http://127.0.0.1:5556/dex"
 token-url = "http://127.0.0.1:5556/dex/token"
-callback-url = "http://127.0.0.1:8001/v2/api/authn/callback"
+callback-url = "http://127.0.0.1:8000/v1/api/authn/callback"
 scopes = [
   "openid",
   "profile",
   "email",
   "offline_access"
 ]
-
-[[dex.connectors]]
-type = "oidc"
-id = "auth0"
-name = "Auth0"
 
 [[dex.connectors]]
 type = "google"

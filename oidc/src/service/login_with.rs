@@ -43,6 +43,8 @@ pub enum LoginError {
     IDPConnectorNotFound { name: String, message: String },
     #[error("LoginUrlError: {}", _0)]
     LoginUrlError(#[from] LoginURLError),
+    #[error("CallbackHandlerError: {}", _0)]
+    CallbackHandler(CallbackError),
 }
 
 impl base::response::errors::ResponseError for LoginError {
@@ -52,8 +54,9 @@ impl base::response::errors::ResponseError for LoginError {
             Self::IDPConnectorNotFound { .. } => {
                 base::response::errors::ErrorCode::InternalServerError
             }
-            Self::LoginUrlError(_) => base::response::errors::ErrorCode::InternalServerError, // Self::CallbackHandler(_) => base::errors::ErrorCode::InternalServerError,
-                                                                                              // Self::AuthFlow(_) => base::errors::ErrorCode::InternalServerError,
+            Self::LoginUrlError(_) => base::response::errors::ErrorCode::InternalServerError,
+            Self::CallbackHandler(_) => base::response::errors::ErrorCode::InternalServerError,
+            // Self::AuthFlow(_) => base::errors::ErrorCode::InternalServerError,
         }
     }
 
@@ -62,8 +65,9 @@ impl base::response::errors::ResponseError for LoginError {
             // Self::HostNotFound(_) => "expected to have `host` header in request".to_string(),
             // Self::DBError(_) => "database error occurred".to_string(),
             Self::IDPConnectorNotFound { .. } => "IDP connector not found".to_string(),
-            Self::LoginUrlError(_) => "url build error".to_owned(), // Self::CallbackHandler(_) => "Callback Handler Error".to_owned(),
-                                                                    // Self::AuthFlow(_) => "Auth Flow Callback Error".to_owned(),
+            Self::LoginUrlError(_) => "url build error".to_owned(),
+            Self::CallbackHandler(_) => "Callback Handler Error".to_owned(),
+            // Self::AuthFlow(_) => "Auth Flow Callback Error".to_owned(),
         }
     }
 }
@@ -78,6 +82,8 @@ use openidconnect::{
     core::{CoreAuthPrompt, CoreAuthenticationFlow, CoreClient, CoreProviderMetadata},
 };
 use reqwest::Client as HttpClient;
+
+use crate::service::callback::CallbackError;
 
 #[derive(Debug)]
 pub struct AuthorizedURLReq {
